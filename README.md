@@ -1,9 +1,10 @@
-# Project Name
+# Snowboard assistant  :mountain:  :snowboarder:  :rocket:
 
 Snowboard assistant helps you plan your season and trips so you make the most of the snow.
+![Example use-case](assets/example-1.png)
 
 ## Quick Start
-We currently only support running the assistant locally on MacOS (Sonoma) with Groq for inference.
+We currently only support running the assistant locally on MacOS (Sonoma). Inference only on Groq since snowboarders love blazing fast responses (i.e., inference) :wink:
 #### Step 1
 First, you can set your Groq API key in the environment variables:
 ```
@@ -19,21 +20,23 @@ pip install -r requirements.txt
 ```
 
 #### Step 3
-Run the assistant
+Run the streamlit app.
 ```
-python3 main.py
+python3 -m streamlit run ./snowboarding-assistant/streamlit_app.py
 ```
 
-## Usage
-Open your terminal and run the main.py file. Follow the prompts to start planning your season!
+#### Step 4
+Start planning your season with the assistant on your browser - have fun and stay warm!
 
 ## Features
 - **Natural Language Input**: Describe what you want to do in plain English (or other supported languages).
 - **Snowboarder-friendly responses and assistance**: The assistant is designed to be helpful and friendly to snowboarders.
+- **Browser-based simple user interface**: Zero-friction to get going.
 
 ## Technologies Used
 - Llama (super-open large language model)
 - Groq (super-fast inference platform)
+- Streamlit (Web user interface)
 
 ## Configuration
 Snowboarding assistant can be configured through environment variables. Support for config file coming soon.
