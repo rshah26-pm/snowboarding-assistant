@@ -62,3 +62,6 @@ test-reports/
 
 # Local development settings
 local_settings.py 
+
+# Notes
+notes

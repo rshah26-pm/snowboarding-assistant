@@ -2,10 +2,27 @@
 
 Snowboard assistant helps you plan your season and trips so you make the most of the snow.
 
-## Setup Requirements
-1. Clone this project
-2. Set up required environment variables:
-   - `GROQ_API_KEY`: Groq API authentication
+## Quick Start
+We currently only support running the assistant locally on MacOS (Sonoma) with Groq for inference.
+#### Step 1
+First, you can set your Groq API key in the environment variables:
+```
+export GROQ_API_KEY=<your-groq-api-key>
+```
+
+#### Step 2
+Set up a virtual environment and install the dependencies.
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+#### Step 3
+Run the assistant
+```
+python3 main.py
+```
 
 ## Usage
 Open your terminal and run the main.py file. Follow the prompts to start planning your season!
