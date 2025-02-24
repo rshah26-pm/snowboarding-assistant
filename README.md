@@ -1,6 +1,9 @@
-# Snowboard assistant  :mountain:  :snowboarder:  :rocket:
+# Snowboard assistant  :mountain:  :snowboarder:  
 
-Snowboard assistant helps you plan your season and trips so you make the most of the snow.
+Snowboard assistant helps you plan your season and trips so you make the most of the snow!
+
+Here's an of how you can super-charge your snowboarding journey with it :rocket:
+
 ![Example use-case](assets/example-1.png)
 
 ## Quick Start
