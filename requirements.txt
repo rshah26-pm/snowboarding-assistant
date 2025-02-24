@@ -1,13 +1,18 @@
-annotated-types==0.7.0
-anyio==4.8.0
-certifi==2025.1.31
-distro==1.9.0
-groq==0.18.0
-h11==0.14.0
-httpcore==1.0.7
-httpx==0.28.1
-idna==3.10
-pydantic==2.10.6
-pydantic_core==2.27.2
-sniffio==1.3.1
-typing_extensions==4.12.2
+# Core dependencies
+groq                    # Groq API client for LLM interactions
+streamlit               # Web framework for building the UI
+
+# Required dependencies for Groq and Streamlit
+annotated-types==0.7.0  # Type annotation support
+anyio==4.8.0           # Asynchronous I/O library
+certifi==2025.1.31     # SSL/TLS certificate verification
+distro==1.9.0          # OS distribution detection
+groq==0.18.0           # Specific version of Groq client
+h11==0.14.0            # HTTP/1.1 protocol implementation
+httpcore==1.0.7        # HTTP client core
+httpx==0.28.1          # Modern HTTP client
+idna==3.10             # Internationalized domain names
+pydantic==2.10.6       # Data validation using Python type annotations
+pydantic_core==2.27.2  # Core functionality for Pydantic
+sniffio==1.3.1         # Async library detection
+typing_extensions==4.12.2  # Backported typing features

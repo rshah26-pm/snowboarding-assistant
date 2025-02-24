@@ -1,7 +1,6 @@
 import os
 from groq import Groq
 
-
 def get_snowboard_assistant_response(user_prompt):
     """
     Get a response from the AI snowboarding assistant using Groq.
@@ -51,7 +50,7 @@ def get_snowboard_assistant_response(user_prompt):
     )
     
     return chat_completion.choices[0].message.content
-
+'''
 def main():
     print("Welcome to the Snowboard Trip Planner AI Assistant!")
     print("Ask me anything about planning your snowboarding season, trips, or gear.")
@@ -72,4 +71,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
+'''
