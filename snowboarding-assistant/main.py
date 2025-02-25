@@ -18,7 +18,7 @@ def get_snowboard_assistant_response(user_prompt):
     # Create the system context
     system_context = """You are a helpful snowboarding assistant that helps users plan their season and trips.
     You have access to a web search tool that can provide current information.
-    When you need current information about resorts, conditions, or gear reviews, use the web_search tool.
+    When you need current information about resorts, weather conditions, or gear reviews, use the web_search tool.
     
     You can provide advice about:
     - Resort recommendations and planning
@@ -50,7 +50,7 @@ def get_snowboard_assistant_response(user_prompt):
                 If YES, respond with 'YES:' followed by a search query optimized to find the specific real-time information needed.
                 Keep the search query concise and specific, and use a simple sentence with no special characters or formatting. Keep it less than 200 characters.
                 Focus the search query on factual current information like weather, conditions, prices, etc.
-                Keep the search query concise and specific."""
+                """
             },
             {
                 "role": "user",
@@ -74,9 +74,8 @@ def get_snowboard_assistant_response(user_prompt):
     search_results = ""
     if needs_search:
         print(f"Performing web search with query: {search_query}")
-        print(f"Search query length: {len(search_query)} characters")
         search_results = tavily_search_tool.run(search_query)
-    
+        print(f"Search results in main.py: {search_results}")
     # Create the final response
     messages = [
         {
