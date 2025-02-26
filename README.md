@@ -2,12 +2,12 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Example of how you can super-charge your snowboarding journey with it :rocket:
-
-![Demo video](assets/example-2.png)
-
 ## Overview
 You're all about the adventure, but not about the planning. Let AI help you plan your season and trips so you make the most of the snow! With the snowboarding assistant, you can find the best resorts for your skill level and interests, get weather updates and forecasts for your chosen resorts, find beginner-friendly slopes and trails, get recommendations for gear and equipment, and more. Built by a snowboarder for snowboarders, using snowboarder-friendly AI! Have fun and stay warm!
+
+Example of how you can super-charge your snowboarding journey with it :rocket:
+
+![Demo video](assets/example-3.png)
 
 ## Quick Start
 We currently only support running the assistant locally on MacOS (Sonoma). Inference only on Groq since snowboarders love blazing fast responses (i.e., inference) :wink:

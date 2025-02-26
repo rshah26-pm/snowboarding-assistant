@@ -1,6 +1,7 @@
 import os
 from groq import Groq
-from tools import tavily_search_tool
+import streamlit as st
+from tools import location_tool, tavily_search_tool  # Import both tools
 
 def get_snowboard_assistant_response(user_prompt):
     """
@@ -15,31 +16,24 @@ def get_snowboard_assistant_response(user_prompt):
     # Initialize Groq client
     client = Groq(api_key=os.environ["GROQ_API_KEY"])
     
-    # Create the system context
+    # Create the base system context
     system_context = """You are a helpful snowboarding assistant that helps users plan their season and trips.
-    You have access to a web search tool that can provide current information.
-    When you need current information about resorts, weather conditions, or gear reviews, use the web_search tool.
+    You have access to two tools:
+    1. A web search tool for current information
+    2. A location tool that provides distances to major ski resorts
     
-    You can provide advice about:
-    - Resort recommendations and planning
-    - Trip planning and logistics 
-    - Gear recommendations and purchases
-    - Clothing and accessories advice
-    - General snowboarding questions
-    
-    Users may provide:
-    - Lists of resorts they want to visit
-    - Planned trips they want to take
-    - Gear they're considering buying
-    - Clothing items they need
-    - Accessories they're interested in
-    
-    Help them make informed decisions about their snowboarding season planning.
-    Focus on being practical and specific in your recommendations.
-    
-    Format your responses in a clear, readable way.
-    If you use web search results, integrate them naturally into your response and Provide a list of links from web search that you used as part of your response (only if you used the web search tool).
+    When making resort recommendations or helping with trip planning:
+    - Always check the user's location first using the get_location_info tool
+    - Consider travel distance when making recommendations
+    - Use the web_search tool for current conditions (such as weather, conditions, prices, etc) and resort information
     """
+
+    # Add location context if available
+    if st.session_state.get('user_location'):
+        location_info = location_tool.run("")  # Get current location info
+        system_context += f"\nUser's current location information:\n{location_info}\n"
+        system_context += "\nConsider this location information when making recommendations."
+
     # First, determine if we need web search and get optimized search query
     planning_message = client.chat.completions.create(
         messages=[
@@ -70,12 +64,10 @@ def get_snowboard_assistant_response(user_prompt):
         search_query = response.split(":", 1)[1].strip()
  
     # If needed, perform web search
-    print(f"Performing web search? {needs_search}")
     search_results = ""
     if needs_search:
-        print(f"Performing web search with query: {search_query}")
         search_results = tavily_search_tool.run(search_query)
-        print(f"Search results in main.py: {search_results}")
+
     # Create the final response
     messages = [
         {
