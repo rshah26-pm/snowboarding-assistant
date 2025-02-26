@@ -19,21 +19,15 @@ def web_search(query: str) -> str:
         search_depth="basic",
         max_results=3
     )
-
-    print(f"Search results: {search_results}\n\n")
     
     # Format results into a readable summary
     summary = []
     for result in search_results['results']:  # search_results is a list of dictionaries
-        print(f"Result: {result}")
         if isinstance(result, dict):  # verify it's a dictionary
             title = result.get('title', 'No title')
             content = result.get('content', 'No content')
             url = result.get('url', 'No URL')
-            print(f"Title: {title}")
-            print(f"URL: {url}")
             summary.append(f"- {title}\nURL: {url}\nSummary: {content}\n")
-    print(f"Summary: {summary}")
    
     return "\n".join(summary) if summary else "No results found."
 

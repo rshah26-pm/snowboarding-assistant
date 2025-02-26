@@ -1,10 +1,10 @@
-# Snowboard assistant  :mountain:  :snowboarder:  
+# Snowboarding assistant  :mountain:  :snowboarder:  
 
-Snowboard assistant helps you plan your season and trips so you make the most of the snow!
+Snowboarding assistant helps you plan your season and trips so you make the most of the snow!
 
-Here's an of how you can super-charge your snowboarding journey with it :rocket:
+Here's an example of how you can super-charge your snowboarding journey with it :rocket:
 
-![Example use-case](assets/example-1.png)
+![Example use-case](assets/example-2.png)
 
 ## Quick Start
 We currently only support running the assistant locally on MacOS (Sonoma). Inference only on Groq since snowboarders love blazing fast responses (i.e., inference) :wink:
