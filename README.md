@@ -4,7 +4,7 @@
 
 Example of how you can super-charge your snowboarding journey with it :rocket:
 
-![Demo video](assets/example-2-video.mov)
+![Demo video](assets/example-2.png)
 
 ## Overview
 You're all about the adventure, but not about the planning. Let AI help you plan your season and trips so you make the most of the snow! With the snowboarding assistant, you can find the best resorts for your skill level and interests, get weather updates and forecasts for your chosen resorts, find beginner-friendly slopes and trails, get recommendations for gear and equipment, and more. Built by a snowboarder for snowboarders, using snowboarder-friendly AI! Have fun and stay warm!
