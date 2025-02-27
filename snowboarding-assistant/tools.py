@@ -47,7 +47,7 @@ def get_user_location(query: str = "") -> str:
     print(f"🔧 Using tool: get_location_info")  # Log tool usage
     
     if 'user_location' not in st.session_state or not st.session_state.user_location:
-        return "Location access not granted. Please select your location for personalized resort recommendations."
+        return "Location access not granted. Please enable location sharing for personalized resort recommendations."
     
     location_data = st.session_state.user_location
     try:
@@ -66,19 +66,25 @@ def get_user_location(query: str = "") -> str:
             'Park City': (40.6461, -111.4980)
         }
         
-        distances = []
+        # Find closest resorts
+        resort_distances = []
         for resort, coords in ski_resorts.items():
             distance = geodesic(location_data['coordinates'], coords).miles
-            distances.append(f"{resort}: {int(distance)} miles")
+            resort_distances.append((resort, distance))
         
-        formatted_distances = "\n- ".join(distances)
+        # Sort by distance
+        resort_distances.sort(key=lambda x: x[1])
+        
+        # Format distances
+        formatted_distances = "\n- ".join([f"{resort}: {int(distance)} miles" for resort, distance in resort_distances])
         
         return f"""Current location: {address}
         
 Distances to major resorts:
 - {formatted_distances}
 
-This information can help identify the most convenient resorts for your trip."""
+The closest resorts to your location are {resort_distances[0][0]} ({int(resort_distances[0][1])} miles) and {resort_distances[1][0]} ({int(resort_distances[1][1])} miles).
+"""
 
     except Exception as e:
         return f"Error processing location data: {str(e)}"

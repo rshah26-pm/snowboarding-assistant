@@ -1,7 +1,7 @@
 import os
 from groq import Groq
 import streamlit as st
-from tools import location_tool, tavily_search_tool  # Import both tools
+from tools import location_tool, tavily_search_tool
 
 def get_snowboard_assistant_response(user_prompt):
     """
@@ -19,20 +19,44 @@ def get_snowboard_assistant_response(user_prompt):
     # Create the base system context
     system_context = """You are a helpful snowboarding assistant that helps users plan their season and trips.
     You have access to two tools:
-    1. A web search tool for current information
+    1. A web search tool for current information about snowboarding resorts, conditions, and gear
     2. A location tool that provides distances to major ski resorts
     
     When making resort recommendations or helping with trip planning:
-    - Always check the user's location first using the get_location_info tool
+    - If the user has shared their location, use the get_location_info tool to find nearby resorts
     - Consider travel distance when making recommendations
-    - Use the web_search tool for current conditions (such as weather, conditions, prices, etc) and resort information
+    - Use the web_search tool for current conditions and resort information
+    
+    Always prioritize resorts that are closer to the user's location when they ask about nearby options.
     """
 
     # Add location context if available
     if st.session_state.get('user_location'):
-        location_info = location_tool.run("")  # Get current location info
-        system_context += f"\nUser's current location information:\n{location_info}\n"
-        system_context += "\nConsider this location information when making recommendations."
+        # Get location info directly from session state
+        location_data = st.session_state.user_location
+        lat, lon = location_data['coordinates']
+        address = location_data['address']
+        
+        # Run the location tool to get distances
+        location_info = location_tool.run("")
+        
+        # Add location context to system prompt
+        system_context += f"\nUser's current location: {address} (Coordinates: {lat}, {lon})\n"
+        system_context += f"\nLocation details:\n{location_info}\n"
+        system_context += "\nUse this location information when making recommendations about nearby resorts."
+        
+        print(f"Location data provided to AI: {address}")
+    else:
+        system_context += "\nThe user has not shared their location. If they ask about nearby resorts, suggest they enable location sharing for personalized recommendations."
+        print("No location data available for AI")
+
+    # Check if the user is asking about location-based recommendations
+    location_keywords = ["near me", "nearby", "closest", "nearest", "my location", "my area", "distance", "how far"]
+    is_location_query = any(keyword in user_prompt.lower() for keyword in location_keywords)
+    
+    # If it's a location query but we don't have location data, add a note
+    if is_location_query and not st.session_state.get('user_location'):
+        system_context += "\nThe user is asking about location-based recommendations, but they haven't shared their location. Make sure to suggest they enable location sharing."
 
     # First, determine if we need web search and get optimized search query
     planning_message = client.chat.completions.create(

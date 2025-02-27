@@ -7,7 +7,7 @@ You're all about the adventure, but not about the planning. Let AI help you plan
 
 Example of how you can super-charge your snowboarding journey with it :rocket:
 
-![Demo video](assets/example-3.png)
+![Demo video](assets/example-4-mini.png)
 
 ## Quick Start
 We currently only support running the assistant locally on MacOS (Sonoma). Inference only on Groq since snowboarders love blazing fast responses (i.e., inference) :wink:
@@ -38,6 +38,8 @@ Start planning your season with the assistant on your browser - have fun and sta
 - **Natural Language Input**: Describe what you want to do in plain English (or other supported languages).
 - **Snowboarder-friendly responses and assistance**: The assistant is designed to be helpful and friendly to snowboarders.
 - **Browser-based simple user interface**: Zero-friction to get going.
+- **Web search**: The assistant can search the web for real-time information like weather, snow conditions, and resort information.
+- **Location-based recommendations**: The assistant can use your location to recommend resorts near you.
 
 ## Technologies Used
 - Llama (super-open large language model)
