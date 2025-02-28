@@ -115,6 +115,59 @@ def init_geolocation():
 st.title("🏂 Snowboarding Assistant")
 st.write("Ask me anything about planning your snowboarding season, trips, or gear!")
 
+# Create suggestion bubbles for common questions
+def create_suggestion_bubbles():
+    add_debug_info("Creating suggestion bubbles")
+    
+    # Create a container for the suggestion bubbles
+    suggestion_container = st.container()
+    
+    with suggestion_container:
+        st.write("Try asking:")
+        
+        # Create three columns for the suggestion bubbles
+        col1, col2, col3 = st.columns(3)
+        
+        # Define the suggestion prompts
+        suggestions = [
+            "What's the closest resort to me?",
+            "Should I go snowboarding tomorrow?",
+            "Is it colder in Tahoe than it is here right now?"
+        ]
+        
+        # Create a button for each suggestion in its own column
+        if col1.button(suggestions[0], key="suggestion_1"):
+            add_debug_info(f"Suggestion clicked: {suggestions[0]}")
+            # Process the suggestion as if it was entered in the chat input
+            process_user_input(suggestions[0])
+            
+        if col2.button(suggestions[1], key="suggestion_2"):
+            add_debug_info(f"Suggestion clicked: {suggestions[1]}")
+            process_user_input(suggestions[1])
+            
+        if col3.button(suggestions[2], key="suggestion_3"):
+            add_debug_info(f"Suggestion clicked: {suggestions[2]}")
+            process_user_input(suggestions[2])
+
+# Function to process user input (either from chat input or suggestion bubbles)
+def process_user_input(prompt):
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    
+    # Get assistant response
+    add_debug_info(f"Processing user prompt: {prompt}")
+    response = get_snowboard_assistant_response(prompt)
+    
+    # Add assistant response to chat history
+    st.session_state.messages.append({"role": "assistant", "content": response})
+    
+    # Force a rerun to update the UI with the new messages
+    st.rerun()
+
+# Display the suggestion bubbles
+create_suggestion_bubbles()
+
+
 # Sidebar for location consent and display
 with st.sidebar:
     st.title("🏂 Snowboarding Assistant")
