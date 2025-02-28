@@ -30,9 +30,10 @@ if 'location_requested' not in st.session_state:
 if 'debug_info' not in st.session_state:
     st.session_state.debug_info = []
 
-# Function to add debug info
+# Function to add debug info - only logs to console, not to UI
 def add_debug_info(message):
     logger.info(message)
+    # Still add to session state for potential future use, but don't display
     st.session_state.debug_info.append(f"{time.strftime('%H:%M:%S')} - {message}")
 
 st.set_page_config(page_title="Snowboarding Assistant", page_icon="🏂")
@@ -152,25 +153,6 @@ with st.sidebar:
     if st.session_state.user_location:
         add_debug_info(f"Displaying location: {st.session_state.user_location['address']}")
         st.success(f"📍 Using location: {st.session_state.user_location['address']}")
-    
-    # Debug section
-    with st.expander("Debug Information"):
-        st.write("Session State Variables:")
-        st.write(f"- location_consent: {st.session_state.location_consent}")
-        st.write(f"- location_requested: {st.session_state.location_requested}")
-        st.write(f"- user_location: {st.session_state.user_location}")
-        
-        st.write("Query Parameters:")
-        st.write(f"- location_data: {st.query_params.get('location_data', 'Not set')}")
-        st.write(f"- consent: {st.query_params.get('consent', 'Not set')}")
-        
-        st.write("Debug Log:")
-        for log in st.session_state.debug_info:
-            st.write(log)
-        
-        if st.button("Clear Debug Log"):
-            st.session_state.debug_info = []
-            st.rerun()
 
 # Handle the location data from query parameters
 location_param = st.query_params.get('location_data')
