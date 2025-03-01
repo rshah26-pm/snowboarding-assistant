@@ -170,7 +170,7 @@ create_suggestion_bubbles()
 
 # Sidebar for location consent and display
 with st.sidebar:
-    st.title("🏂 Snowboarding Assistant")
+    st.header("Settings")
     
     # Slick consent checkbox
     location_consent = st.checkbox(
