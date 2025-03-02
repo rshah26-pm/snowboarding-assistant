@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
-You're all about the adventure, but not about the planning. Let AI help you plan your season and trips so you make the most of the snow! With the snowboarding assistant, you can find the best resorts for your skill level and interests, get weather updates and forecasts for your chosen resorts, find beginner-friendly slopes and trails, get recommendations for gear and equipment, and more. Built by a snowboarder for snowboarders, using a snowboarder-friendly AI agent! Have fun and stay warm!
+So you're all about the adventure, but not about the planning? Snowboarding assistant is an AI agent that helps you plan your season and trips so you make the most of the snow! Find the best resorts for your skill level and interests, get live weather forecasts for destinations, find beginner-friendly slopes and trails, get recommendations for gear and equipment, and more. Built by a snowboarder for snowboarders, using a snowboarder-friendly AI agent! Have fun and stay warm!
 
 Example of how you can super-charge your snowboarding journey with this assistant :rocket:
 
