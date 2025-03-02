@@ -7,7 +7,7 @@ So you're all about the adventure, but not about the planning? Snowboarding assi
 
 Example of how you can super-charge your snowboarding journey with this assistant :rocket:
 
-![Example chat screenshot](assets/example-4.png)
+![Example chat screenshot](assets/example-4-mini.png)
 
 ## Quick Start
 We currently only support running the assistant locally on MacOS (Sonoma). Inference only on Groq since snowboarders love blazing fast responses (i.e., inference) :wink:
@@ -29,7 +29,7 @@ pip install -r requirements.txt
 #### Step 3
 Run the streamlit app.
 ```
-python3 -m streamlit run ./snowboarding-assistant/streamlit_app.py
+python3 -m streamlit run streamlit_app.py
 ```
 
 #### Step 4
@@ -56,3 +56,24 @@ Snowboarding assistant can be configured through environment variables. Support 
 
 ## License
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Requirements
+- Python 3.9+
+- Groq API key (sign up at https://console.groq.com)
+- Tavily API key (sign up at https://tavily.com)
+
+## Dependencies
+- streamlit
+- groq
+- langchain
+- geopy
+- python-dotenv
+- tavily-python
+
+## Troubleshooting
+- **API Key Issues**: Ensure your API keys are correctly set in the .env file or as environment variables
+- **Location Access**: If location features aren't working, check that you've allowed location access in your browser
+- **Rate Limiting**: The application limits requests to 20 per minute to prevent API overuse
+
+## Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to this project.

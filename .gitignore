@@ -66,3 +66,21 @@ local_settings.py
 # Notes
 notes
 debug_notes
+
+# Streamlit secrets
+.streamlit/
+
+# Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
