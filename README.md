@@ -29,7 +29,7 @@ pip install -r requirements.txt
 #### Step 3
 Run the streamlit app.
 ```
-python3 -m streamlit run streamlit_app.py
+python3 -m streamlit run ./snowboarding-assistant/streamlit_app.py
 ```
 
 #### Step 4

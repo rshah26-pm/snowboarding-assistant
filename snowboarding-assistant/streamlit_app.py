@@ -23,7 +23,7 @@ def can_issue_prompt():
         st.session_state.prompt_count = 0
         st.session_state.first_prompt_time = current_time
     
-    if st.session_state.prompt_count < 5:
+    if st.session_state.prompt_count < 20:
         add_debug_info(f"Prompt count: {st.session_state.prompt_count}")
         st.session_state.prompt_count += 1
         return True
