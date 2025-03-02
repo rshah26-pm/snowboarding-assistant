@@ -2,6 +2,8 @@ import os
 from groq import Groq
 import streamlit as st
 from tools import location_tool, tavily_search_tool
+from dotenv import load_dotenv
+from config import GROQ_API_KEY  # Import API keys
 
 def get_snowboard_assistant_response(user_prompt):
     """
@@ -13,8 +15,25 @@ def get_snowboard_assistant_response(user_prompt):
     Returns:
         str: The AI assistant's response
     """
+    # Load environment variables from .env file
+    load_dotenv()
+
+    # Function to get API keys
+    def get_api_key(key_name):
+        # First try to get from Streamlit secrets
+        if key_name in st.secrets:
+            logger.info(f"Using {key_name} from Streamlit secrets")
+            return st.secrets[key_name]
+        # Then try to get from environment variables
+        elif key_name in os.environ:
+            logger.info(f"Using {key_name} from environment variables")
+            return os.environ[key_name]
+        else:
+            logger.warning(f"{key_name} not found in secrets or environment variables")
+            return None
+
     # Initialize Groq client
-    client = Groq(api_key=os.environ["GROQ_API_KEY"])
+    groq_client = Groq(api_key=GROQ_API_KEY)
     
     # Create the base system context
     system_context = """You are a helpful snowboarding assistant that helps users plan their season and trips.
@@ -59,7 +78,7 @@ def get_snowboard_assistant_response(user_prompt):
         system_context += "\nThe user is asking about location-based recommendations, but they haven't shared their location. Make sure to suggest they enable location sharing."
 
     # First, determine if we need web search and get optimized search query
-    planning_message = client.chat.completions.create(
+    planning_message = groq_client.chat.completions.create(
         messages=[
             {
                 "role": "system", 
@@ -111,7 +130,7 @@ def get_snowboard_assistant_response(user_prompt):
             "content": f"Web search results:\n{search_results}\nUse this information in your response when relevant."
         })
     
-    chat_completion = client.chat.completions.create(
+    chat_completion = groq_client.chat.completions.create(
         messages=messages,
         model="llama3-8b-8192",
         temperature=0.7

@@ -3,8 +3,7 @@ from tavily import TavilyClient
 import os
 import streamlit as st
 from geopy.distance import geodesic
-
-tavily = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+from config import TAVILY_API_KEY
 
 def web_search(query: str) -> str:
     """
@@ -17,8 +16,8 @@ def web_search(query: str) -> str:
         str: Search results summary
     """
     print(f"🔧 Using tool: web_search with query: {query}")  # Log tool usage
-    
-    search_results = tavily.search(
+    tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
+    search_results = tavily_client.search(
         query=query,
         search_depth="basic",
         max_results=3
@@ -36,11 +35,14 @@ def web_search(query: str) -> str:
     return "\n".join(summary) if summary else "No results found."
 
 # Define the tool
+
+
 tavily_search_tool = Tool(
     name="web_search",
     description="Useful for searching current information about snowboarding resorts, conditions, gear reviews, and related topics.",
     func=web_search
 )
+
 
 def get_user_location(query: str = "") -> str:
     """Get user's location and return relevant information for snowboarding recommendations."""

@@ -10,6 +10,27 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+if 'prompt_count' not in st.session_state:
+    st.session_state.prompt_count = 0
+    st.session_state.first_prompt_time = time.time()
+
+def can_issue_prompt():
+    add_debug_info("Checking if prompt can be issued")
+    current_time = time.time()
+    time_elapsed = current_time - st.session_state.first_prompt_time
+    
+    if time_elapsed > 60:  # Reset the count after a minute
+        st.session_state.prompt_count = 0
+        st.session_state.first_prompt_time = current_time
+    
+    if st.session_state.prompt_count < 5:
+        add_debug_info(f"Prompt count: {st.session_state.prompt_count}")
+        st.session_state.prompt_count += 1
+        return True
+    else:
+        add_debug_info("Rate limit reached, wait a few seconds...")
+        return False
+
 # Get initial query parameters
 initial_location_param = st.query_params.get('location_data')
 initial_consent_param = st.query_params.get('consent', 'false').lower() == 'true'
@@ -115,58 +136,6 @@ def init_geolocation():
 st.title("🏂 Snowboarding Assistant")
 st.write("Ask me anything about planning your snowboarding season, trips, or gear!")
 
-# Create suggestion bubbles for common questions
-def create_suggestion_bubbles():
-    add_debug_info("Creating suggestion bubbles")
-    
-    # Create a container for the suggestion bubbles
-    suggestion_container = st.container()
-    
-    with suggestion_container:
-        st.write("Try asking:")
-        
-        # Create three columns for the suggestion bubbles
-        col1, col2, col3 = st.columns(3)
-        
-        # Define the suggestion prompts
-        suggestions = [
-            "What's the closest resort to me?",
-            "Should I go snowboarding tomorrow?",
-            "Is it colder in Tahoe than it is here right now?"
-        ]
-        
-        # Create a button for each suggestion in its own column
-        if col1.button(suggestions[0], key="suggestion_1"):
-            add_debug_info(f"Suggestion clicked: {suggestions[0]}")
-            # Process the suggestion as if it was entered in the chat input
-            process_user_input(suggestions[0])
-            
-        if col2.button(suggestions[1], key="suggestion_2"):
-            add_debug_info(f"Suggestion clicked: {suggestions[1]}")
-            process_user_input(suggestions[1])
-            
-        if col3.button(suggestions[2], key="suggestion_3"):
-            add_debug_info(f"Suggestion clicked: {suggestions[2]}")
-            process_user_input(suggestions[2])
-
-# Function to process user input (either from chat input or suggestion bubbles)
-def process_user_input(prompt):
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    
-    # Get assistant response
-    add_debug_info(f"Processing user prompt: {prompt}")
-    response = get_snowboard_assistant_response(prompt)
-    
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response})
-    
-    # Force a rerun to update the UI with the new messages
-    st.rerun()
-
-# Display the suggestion bubbles
-create_suggestion_bubbles()
-
 
 # Sidebar for location consent and display
 with st.sidebar:
@@ -250,21 +219,81 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Chat input
-if prompt := st.chat_input("Ask about snowboarding..."):
+def process_user_input(prompt):
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
     
-    # Display user message in chat message container
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    # Display assistant response in chat message container
-    with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            add_debug_info(f"Processing user prompt: {prompt}")
-            response = get_snowboard_assistant_response(prompt)
-            st.markdown(response)
-    
+    while not can_issue_prompt():
+        with st.spinner("Rate limit reached, wait a few seconds..."):
+            add_debug_info("Rate limit reached, wait a few seconds...")
+            time.sleep(10)
+    with st.spinner("Thinking..."):
+        add_debug_info(f"Processing user prompt: {prompt}")
+        response = get_snowboard_assistant_response(prompt)
+
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
+    
+    # Force a rerun to update the UI with the new messages
+    st.rerun()
+
+
+
+
+def handle_suggestion_click(suggestion):
+    add_debug_info(f"Suggestion clicked: {suggestion}")
+    # Process the suggestion as if it was entered in the chat input
+    process_user_input(suggestion)
+
+def initialize_suggestion_bubbles():
+    add_debug_info("Creating suggestion bubbles")
+    
+    # Create a container for the suggestion bubbles
+    suggestion_container = st.container()
+    
+    with suggestion_container:        
+        # Create three columns for the suggestion bubbles
+        col1, col2, col3 = st.columns(3)
+        
+        # Define the suggestion prompts
+        suggestions = [
+            "What's the closest resort to me?",
+            "Should I go snowboarding tomorrow?",
+            "Is it colder in Tahoe than it is here right now?"
+        ]
+        
+        # Create a button for each suggestion in its own column
+        if col1.button(suggestions[0], key="suggestion_1"):
+            handle_suggestion_click(suggestions[0])
+            
+        if col2.button(suggestions[1], key="suggestion_2"):
+            handle_suggestion_click(suggestions[1])
+            
+        if col3.button(suggestions[2], key="suggestion_3"):
+            handle_suggestion_click(suggestions[2])
+
+
+def handle_chat_input():
+    if prompt := st.chat_input("Ask about snowboarding..."):
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        # Process user input to get assistant response
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                add_debug_info(f"Processing user prompt: {prompt}")
+                process_user_input(prompt)
+        
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
+
+# Display the suggestion bubbles
+initialize_suggestion_bubbles()
+
+# Call the function to handle chat input
+handle_chat_input()
