@@ -4,6 +4,11 @@ import streamlit as st
 from tools import location_tool, tavily_search_tool
 from dotenv import load_dotenv
 from config import GROQ_API_KEY  # Import API keys
+import logging
+
+# Set up logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def get_snowboard_assistant_response(user_prompt):
     """
