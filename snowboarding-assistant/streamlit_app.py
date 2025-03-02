@@ -220,25 +220,31 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 def process_user_input(prompt):
+    """Process user input and get assistant response."""
+    if not prompt:
+        return
+        
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
     
-    while not can_issue_prompt():
-        with st.spinner("Rate limit reached, wait a few seconds..."):
-            add_debug_info("Rate limit reached, wait a few seconds...")
-            time.sleep(10)
-    with st.spinner("Thinking..."):
-        add_debug_info(f"Processing user prompt: {prompt}")
-        response = get_snowboard_assistant_response(prompt)
-
+    # Display user message in chat message container
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    
+    # Get assistant response
+    with st.chat_message("assistant"):
+        while not can_issue_prompt():
+            with st.spinner("Rate limit reached, wait a few seconds..."):
+                add_debug_info("Rate limit reached, waiting...")
+                time.sleep(10)
+        
+        with st.spinner("Thinking..."):
+            add_debug_info(f"Processing user prompt: {prompt}")
+            response = get_snowboard_assistant_response(prompt)
+            st.markdown(response)
+    
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
-    
-    # Force a rerun to update the UI with the new messages
-    st.rerun()
-
-
-
 
 def handle_suggestion_click(suggestion):
     add_debug_info(f"Suggestion clicked: {suggestion}")
@@ -275,22 +281,7 @@ def initialize_suggestion_bubbles():
 
 def handle_chat_input():
     if prompt := st.chat_input("Ask about snowboarding..."):
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        # Display user message in chat message container
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        # Process user input to get assistant response
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                add_debug_info(f"Processing user prompt: {prompt}")
-                process_user_input(prompt)
-        
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
-
+        process_user_input(prompt)
 
 # Display the suggestion bubbles
 initialize_suggestion_bubbles()
