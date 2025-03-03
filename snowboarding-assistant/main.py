@@ -1,7 +1,7 @@
 import os
 from groq import Groq
 import streamlit as st
-from tools import location_tool, tavily_search_tool
+from tools import resort_distance_calculator, tavily_search_tool
 from dotenv import load_dotenv
 from config import GROQ_API_KEY  # Import API keys
 import logging
@@ -63,7 +63,7 @@ def get_snowboard_assistant_response(user_prompt):
             address = location_data['address']
             
             # Run the location tool to get distances
-            location_info = location_tool.run("")
+            location_info = resort_distance_calculator.run("")
             
             # Add location context to system prompt
             system_context += f"\nUser's current location: {address} (Coordinates: {lat}, {lon})\n"

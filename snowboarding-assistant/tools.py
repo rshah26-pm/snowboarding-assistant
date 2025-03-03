@@ -44,9 +44,9 @@ tavily_search_tool = Tool(
 )
 
 
-def get_user_location(query: str = "") -> str:
+def get_user_to_resort_distance(query: str = "") -> str:
     """Get user's location and return relevant information for snowboarding recommendations."""
-    print(f"🔧 Using tool: get_location_info")  # Log tool usage
+    print(f"🔧 Using tool: resort_distance_calculator")  # Log tool usage
     
     if 'user_location' not in st.session_state or not st.session_state.user_location:
         return "Location access not granted. Please enable location sharing for personalized resort recommendations."
@@ -91,19 +91,18 @@ The closest resorts to your location are {resort_distances[0][0]} ({int(resort_d
     except Exception as e:
         return f"Error processing location data: {str(e)}"
 
-# Add this after your get_user_location() function
-location_tool = Tool(
-    name="get_location_info",
-    description="""Use this tool when you need to consider the user's location for resort recommendations, 
-    trip planning, or travel logistics. It provides the user's location and distances to major ski resorts. 
+resort_distance_calculator = Tool(
+    name="resort_distance_calculator",
+    description="""Use this tool to calculate distances from the user's location to nearby snowboarding resorts. 
+    It provides the user's location and distances to major ski resorts. 
     Only use this when the user's query involves location-based recommendations, distance considerations, 
     or travel planning. The tool returns distances to resorts like Heavenly, Northstar, Palisades Tahoe, 
     Kirkwood, Mammoth, Vail, Breckenridge, and Park City.""",
-    func=get_user_location
+    func=get_user_to_resort_distance
 )
 
 # Make sure both tools are available for use
 tools = [
     tavily_search_tool,
-    location_tool
+    resort_distance_calculator  # Updated tool name
 ] 
