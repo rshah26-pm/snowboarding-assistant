@@ -219,6 +219,43 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+def get_contextual_suggestions():
+    """Return suggestions based on conversation context"""
+    # Default suggestions for new conversations
+    return [
+        "What's the closest resort to me?",
+        "Should I go snowboarding tomorrow?",
+        "Recommend beginner-friendly gear"
+    ]
+
+def initialize_suggestion_bubbles():
+    """Display suggestion bubbles only at the start of a new conversation"""
+    # Only show suggestions if there are no messages yet
+    if len(st.session_state.messages) == 0:
+        add_debug_info("Creating initial suggestion bubbles")
+        
+        suggestions = get_contextual_suggestions()
+        add_debug_info(f"Generated {len(suggestions)} suggestions")
+        
+        # Create a container for the suggestion bubbles
+        suggestion_container = st.container()
+        
+        with suggestion_container:
+            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+            st.caption("Try asking:")
+            
+            # Create columns for a more responsive layout
+            cols = st.columns(len(suggestions))
+            
+            # Create a button for each suggestion
+            for i, suggestion in enumerate(suggestions):
+                if cols[i].button(suggestion, key=f"suggestion_{i}", use_container_width=True):
+                    add_debug_info(f"Suggestion clicked: {suggestion}")
+                    # Store the suggestion in session state
+                    st.session_state.clicked_suggestion = suggestion
+                    # Force a rerun to immediately update the UI
+                    st.rerun()
+
 def process_user_input(prompt):
     """Process user input and get assistant response."""
     if not prompt:
@@ -246,44 +283,33 @@ def process_user_input(prompt):
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
 
-def handle_suggestion_click(suggestion):
-    add_debug_info(f"Suggestion clicked: {suggestion}")
-    # Process the suggestion as if it was entered in the chat input
-    process_user_input(suggestion)
-
-def initialize_suggestion_bubbles():
-    add_debug_info("Creating suggestion bubbles")
-    
-    # Create a container for the suggestion bubbles
-    suggestion_container = st.container()
-    
-    with suggestion_container:        
-        # Create three columns for the suggestion bubbles
-        col1, col2, col3 = st.columns(3)
-        
-        # Define the suggestion prompts
-        suggestions = [
-            "What's the closest resort to me?",
-            "Should I go snowboarding tomorrow?",
-            "Is it colder in Tahoe than it is here right now?"
-        ]
-        
-        # Create a button for each suggestion in its own column
-        if col1.button(suggestions[0], key="suggestion_1"):
-            handle_suggestion_click(suggestions[0])
-            
-        if col2.button(suggestions[1], key="suggestion_2"):
-            handle_suggestion_click(suggestions[1])
-            
-        if col3.button(suggestions[2], key="suggestion_3"):
-            handle_suggestion_click(suggestions[2])
-
-
 def handle_chat_input():
     if prompt := st.chat_input("Ask about snowboarding..."):
-        process_user_input(prompt)
+        add_debug_info(f"Text input received: {prompt}")
+        # Store the text input in session state
+        st.session_state.text_input = prompt
+        # Force a rerun to immediately update the UI
+        st.rerun()
 
-# Display the suggestion bubbles
+# Check if there's a clicked suggestion to process at the beginning of the app
+if 'clicked_suggestion' in st.session_state:
+    suggestion = st.session_state.clicked_suggestion
+    add_debug_info(f"Processing stored suggestion: {suggestion}")
+    # Remove from session state to prevent processing again
+    del st.session_state.clicked_suggestion
+    # Process the suggestion
+    process_user_input(suggestion)
+
+# Check if there's a text input to process at the beginning of the app
+elif 'text_input' in st.session_state:
+    text = st.session_state.text_input
+    add_debug_info(f"Processing stored text input: {text}")
+    # Remove from session state to prevent processing again
+    del st.session_state.text_input
+    # Process the text input
+    process_user_input(text)
+
+# Display the suggestion bubbles (only if no messages yet)
 initialize_suggestion_bubbles()
 
 # Call the function to handle chat input
