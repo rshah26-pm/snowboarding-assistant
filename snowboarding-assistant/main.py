@@ -3,7 +3,7 @@ from groq import Groq
 import streamlit as st
 from tools import resort_distance_calculator, tavily_search_tool
 from dotenv import load_dotenv
-from config import GROQ_API_KEY  # Import API keys
+from config import GROQ_API_KEY, check_tavily_usage  # Import API keys and check_tavily_usage function
 import logging
 
 # Set up logger
@@ -115,7 +115,17 @@ def get_snowboard_assistant_response(user_prompt):
         # If needed, perform web search
         search_results = ""
         if needs_search:
-            search_results = tavily_search_tool.run(search_query)
+            # Check if we've exceeded the Tavily usage limit
+            usage_count, limit_exceeded = check_tavily_usage()
+            
+            if limit_exceeded:
+                search_results = "Web search is currently unavailable as we've reached our monthly limit of 600 requests. " \
+                                 "I'll answer based on my existing knowledge."
+                # Also add this to the system context
+                system_context += "\nNOTE: Web search functionality is currently unavailable due to reaching the monthly request limit. " \
+                                  "Please provide answers based on your existing knowledge only."
+            else:
+                search_results = tavily_search_tool.run(search_query)
 
         # Create the final response
         messages = [
