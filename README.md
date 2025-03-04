@@ -10,9 +10,15 @@ Example of how you can super-charge your snowboarding journey with this assistan
 ![Example chat screenshot](assets/example-4-mini.png)
 
 ## Quick Start
-We currently only support running the assistant locally on MacOS (Sonoma). Inference only on Groq since snowboarders love blazing fast responses (i.e., inference) :wink:
+### Hosted on Streamlit:
+
+To play with the Snowboarding Assistant, you can use the hosted version at [snow-ai.streamlit.app](https://snow-ai.streamlit.app).
+
+### Running locally:
+
+Alternatively, you can run the Snowboarding Assistant locally. It's been tested on MacOS (Sonoma) with Python 3.11. Inference only on Groq since snowboarders love blazing fast responses (i.e., inference) :wink:
 #### Step 1
-First, you can set your Groq API key in the environment variables:
+First, set your API keys in the environment variables:
 ```
 export GROQ_API_KEY=<your-groq-api-key>
 export TAVILY_API_KEY=<your-tavily-api-key>
@@ -32,9 +38,6 @@ Run the streamlit app.
 python3 -m streamlit run ./snowboarding-assistant/streamlit_app.py
 ```
 
-#### Step 4
-Start planning your season with the assistant on your browser - have fun and stay warm!
-
 ## Features
 - **AI agent framework**: The assistant is built using Langchain, an AI agent framework with tool use:
     - **Web search**: The assistant can search the web for real-time information like weather, snow conditions, and resort information.
@@ -52,7 +55,7 @@ Start planning your season with the assistant on your browser - have fun and sta
 - Langchain (AI agent framework)
 
 ## Configuration
-Snowboarding assistant can be configured through environment variables. Support for config file coming soon.
+Snowboarding assistant can be configured through environment variables or a streamlit config file.
 
 ## License
 MIT License. See [LICENSE](LICENSE) for details.
