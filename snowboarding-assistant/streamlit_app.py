@@ -161,7 +161,7 @@ with st.sidebar:
             # Initialize geolocation when consent is given
             add_debug_info("Consent given, initializing geolocation")
             init_geolocation()
-            st.info("Requesting your location... Please allow location access in your browser.")
+            st.info("Requesting your location... Please allow location access in your browser and wait for a few seconds.")
         else:
             # Clear location data when consent is revoked
             add_debug_info("Consent revoked, clearing location data")
