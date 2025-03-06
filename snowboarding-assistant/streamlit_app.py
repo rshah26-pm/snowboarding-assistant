@@ -214,10 +214,16 @@ if st.session_state.location_requested and st.session_state.location_consent and
     add_debug_info("Location requested but not received, reinitializing geolocation")
     init_geolocation()
 
-# Display chat messages from history
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# First, display chat messages from history EXCEPT the last message if it's being processed
+message_placeholder = st.container()
+with message_placeholder:
+    for i, message in enumerate(st.session_state.messages):
+        # Skip displaying the last message if we're in the middle of processing a response
+        if i == len(st.session_state.messages) - 1 and message["role"] == "user" and "processing" in st.session_state and st.session_state.processing:
+            continue
+            
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
 def get_contextual_suggestions():
     """Return suggestions based on conversation context"""
@@ -261,27 +267,80 @@ def process_user_input(prompt):
     if not prompt:
         return
         
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    # Check if this is a new prompt (not already in messages)
+    is_new_prompt = True
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user" and st.session_state.messages[-1]["content"] == prompt:
+        add_debug_info(f"Prompt already in messages, skipping: {prompt}")
+        is_new_prompt = False
     
-    # Display user message in chat message container
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    # Get assistant response
-    with st.chat_message("assistant"):
-        while not can_issue_prompt():
-            with st.spinner("Rate limit reached, wait a few seconds..."):
-                add_debug_info("Rate limit reached, waiting...")
-                time.sleep(10)
+    if is_new_prompt:
+        add_debug_info(f"Adding new prompt to messages: {prompt}")
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
         
-        with st.spinner("Thinking..."):
-            add_debug_info(f"Processing user prompt: {prompt}")
-            response = get_snowboard_assistant_response(prompt)
-            st.markdown(response)
-    
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        # Display user message immediately
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        # Check if location consent is given but location is not yet available
+        if st.session_state.location_consent and not st.session_state.user_location:
+            add_debug_info("Location consent given but location not yet available")
+            
+            # Wait for location with a simple spinner
+            with st.spinner("Waiting for your location data (this may take a few seconds)..."):
+                # Wait for a maximum of 10 seconds
+                wait_start = time.time()
+                while time.time() - wait_start < 10 and not st.session_state.user_location:
+                    # Sleep briefly to avoid CPU spinning
+                    time.sleep(0.5)
+                    
+                    # Check if location data is now available in query params
+                    location_param = st.query_params.get('location_data')
+                    if location_param:
+                        try:
+                            add_debug_info(f"Found location_data while waiting: {location_param}")
+                            lat, lon = map(float, location_param.split(','))
+                            
+                            # Convert coordinates to location name
+                            geolocator = Nominatim(user_agent="snowboarding_assistant")
+                            location_data = geolocator.reverse((lat, lon))
+                            
+                            # Store in session state
+                            st.session_state.user_location = {
+                                'coordinates': (lat, lon),
+                                'address': location_data.address
+                            }
+                            add_debug_info(f"Successfully obtained location: {st.session_state.user_location}")
+                            break
+                            
+                        except Exception as e:
+                            add_debug_info(f"Error processing location data: {str(e)}")
+        
+        # Get assistant response
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                add_debug_info(f"Getting assistant response for: {prompt}")
+                while not can_issue_prompt():
+                    with st.spinner("Rate limit reached, wait a few seconds..."):
+                        add_debug_info("Rate limit reached, waiting...")
+                        time.sleep(10)
+                
+                # Log location status before getting response
+                if st.session_state.user_location:
+                    add_debug_info(f"Using location for response: {st.session_state.user_location}")
+                else:
+                    add_debug_info("No location data available for response")
+                
+                # Pass conversation history to get_snowboard_assistant_response
+                conversation_history = st.session_state.messages.copy()
+                response = get_snowboard_assistant_response(prompt, conversation_history)
+                add_debug_info("Got assistant response")
+                
+                # Display the response immediately
+                st.markdown(response)
+        
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
 def handle_chat_input():
     if prompt := st.chat_input("Ask about snowboarding..."):

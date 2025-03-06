@@ -10,12 +10,13 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def get_snowboard_assistant_response(user_prompt):
+def get_snowboard_assistant_response(user_prompt, conversation_history=None):
     """
     Get a response from the AI snowboarding assistant using Groq.
     
     Args:
         user_prompt (str): The user's question or request
+        conversation_history (list, optional): Previous messages in the conversation
         
     Returns:
         str: The AI assistant's response
@@ -132,18 +133,35 @@ def get_snowboard_assistant_response(user_prompt):
             {
                 "role": "system",
                 "content": system_context
-            },
-            {
-                "role": "user",
-                "content": user_prompt
             }
         ]
-
+        
+        # Add conversation history if provided
+        if conversation_history:
+            # Only include the last few messages to stay within token limits
+            # Skip system messages and only include user and assistant messages
+            for message in conversation_history[-6:]:  # Include up to 6 recent messages
+                if message["role"] in ["user", "assistant"]:
+                    messages.append(message)
+        else:
+            # If no history, just add the current prompt
+            messages.append({
+                "role": "user",
+                "content": user_prompt
+            })
+        
         # Add search results if available
         if search_results:
             messages.append({
                 "role": "system",
                 "content": f"Web search results:\n{search_results}\nUse this information in your response when relevant."
+            })
+        
+        # Make sure the current prompt is included as the last user message
+        if not messages[-1]["role"] == "user" or not messages[-1]["content"] == user_prompt:
+            messages.append({
+                "role": "user",
+                "content": user_prompt
             })
         
         chat_completion = groq_client.chat.completions.create(
