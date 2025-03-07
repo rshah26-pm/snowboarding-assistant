@@ -54,6 +54,8 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         - Use the web_search tool for current conditions and resort information
         
         Always prioritize resorts that are closer to the user's location when they ask about nearby options.
+        
+        IMPORTANT: Remember the conversation history and maintain context between messages. Refer back to previous questions and answers when relevant.
         """
 
         # Add location context if available
@@ -71,10 +73,10 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             system_context += f"\nLocation details:\n{location_info}\n"
             system_context += "\nUse this location information when making recommendations about nearby resorts."
             
-            print(f"Location data provided to AI: {address}")
+            logger.info(f"Location data provided to AI: {address}")
         else:
             system_context += "\nThe user has not shared their location. If they ask about nearby resorts, suggest they enable location sharing for personalized recommendations."
-            print("No location data available for AI")
+            logger.info("No location data available for AI")
 
         # Check if the user is asking about location-based recommendations
         location_keywords = ["near me", "nearby", "closest", "nearest", "my location", "my area", "distance", "how far"]
@@ -138,13 +140,25 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         
         # Add conversation history if provided
         if conversation_history:
+            # Log the conversation history for debugging
+            logger.info(f"Adding conversation history with {len(conversation_history)} messages")
+            
             # Only include the last few messages to stay within token limits
             # Skip system messages and only include user and assistant messages
-            for message in conversation_history[-6:]:  # Include up to 6 recent messages
+            history_to_include = []
+            for message in conversation_history[-8:]:  # Include up to 8 recent messages (4 exchanges)
                 if message["role"] in ["user", "assistant"]:
-                    messages.append(message)
+                    history_to_include.append({
+                        "role": message["role"],
+                        "content": message["content"]
+                    })
+            
+            # Add the filtered history to messages
+            messages.extend(history_to_include)
+            logger.info(f"Added {len(history_to_include)} messages from history")
         else:
             # If no history, just add the current prompt
+            logger.info("No conversation history provided")
             messages.append({
                 "role": "user",
                 "content": user_prompt
@@ -158,11 +172,15 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             })
         
         # Make sure the current prompt is included as the last user message
-        if not messages[-1]["role"] == "user" or not messages[-1]["content"] == user_prompt:
+        if not (messages[-1]["role"] == "user" and messages[-1]["content"] == user_prompt):
             messages.append({
                 "role": "user",
                 "content": user_prompt
             })
+        
+        # Log the final message structure
+        logger.info(f"Sending {len(messages)} messages to Groq")
+        logger.info(f"Messages: {messages}")
         
         chat_completion = groq_client.chat.completions.create(
             messages=messages,
@@ -173,5 +191,5 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         return chat_completion.choices[0].message.content
     except Exception as e:
         error_message = f"Error getting response: {str(e)}"
-        print(f"Error: {error_message}")
+        logger.error(f"Error: {error_message}")
         return f"Sorry, I encountered an error: {error_message}. Please try again later."
