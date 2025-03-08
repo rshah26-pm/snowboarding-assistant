@@ -10,9 +10,16 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+MAX_MESSAGE_COUNT = 10  # Set the maximum number of messages allowed per conversation
+
 if 'prompt_count' not in st.session_state:
     st.session_state.prompt_count = 0
     st.session_state.first_prompt_time = time.time()
+
+if 'message_count' not in st.session_state:
+    st.session_state.message_count = 0
+if 'free_tier_ended' not in st.session_state:
+    st.session_state.free_tier_ended = False
 
 def can_issue_prompt():
     add_debug_info("Checking if prompt can be issued")
@@ -176,6 +183,23 @@ with st.sidebar:
         add_debug_info(f"Displaying location: {st.session_state.user_location['address']}")
         st.success(f"📍 Using location: {st.session_state.user_location['address']}")
 
+    # Add a divider
+    st.divider()
+    
+    # Show usage information
+    st.subheader("Usage Information")
+    remaining_messages = max(0, MAX_MESSAGE_COUNT - st.session_state.message_count)
+    
+    # Create a progress bar
+    progress = st.session_state.message_count / MAX_MESSAGE_COUNT
+    st.progress(progress)
+    
+    # Show remaining messages
+    if remaining_messages > 0:
+        st.info(f"You have {remaining_messages} messages remaining in this free session.")
+    else:
+        st.warning("You've reached the free tier limit.")
+
 # Handle the location data from query parameters
 location_param = st.query_params.get('location_data')
 if location_param:
@@ -266,7 +290,27 @@ def process_user_input(prompt):
     """Process user input and get assistant response."""
     if not prompt:
         return
+    
+    # Check if the user has reached the message limit
+    
+    if st.session_state.message_count >= MAX_MESSAGE_COUNT:
+        if not st.session_state.free_tier_ended:
+            st.session_state.free_tier_ended = True
+            # Add a message to the chat history
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": f"⚠️ **You've reached the free tier limit of {MAX_MESSAGE_COUNT} messages per conversation.** \n\n" +
+                           "Thank you for understanding as we work to provide this service to all users fairly."
+            })
+            # Display the message
+            with st.chat_message("assistant"):
+                st.markdown(f"⚠️ **You've reached the free tier limit of {MAX_MESSAGE_COUNT} messages per conversation.** \n\n" +
+                           "Thank you for understanding as we work to provide this service to all users fairly.")
+        return
         
+    # Increment the message count (counts both user and assistant messages as one interaction)
+    st.session_state.message_count += 1
+    
     # Check if this is a new prompt (not already in messages)
     is_new_prompt = True
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user" and st.session_state.messages[-1]["content"] == prompt:
