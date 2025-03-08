@@ -143,14 +143,19 @@ def init_geolocation():
 st.title("🏂 Snowboarding Assistant")
 st.write("Ask me anything about planning your snowboarding season, trips, or gear!")
 
+# Add a prominent note about the sidebar for location sharing
+st.markdown(
+    "<small style='color: green;'>💡 Enable <strong>location sharing</strong> in the sidebar for personalized responses.</small>",
+    unsafe_allow_html=True
+)
 
-# Sidebar for location consent and display
+# Sidebar for location consent and display 
 with st.sidebar:
     st.header("Settings")
     
     # Slick consent checkbox
     location_consent = st.checkbox(
-        "📍 Share my location for personalized resort recommendations",
+        "📍 Share my location",
         value=st.session_state.location_consent,
         help="Your location will be used to calculate distances to ski resorts",
         key="location_consent_checkbox"
@@ -272,7 +277,6 @@ def initialize_suggestion_bubbles():
         
         with suggestion_container:
             st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
-            st.caption("Try asking:")
             
             # Create columns for a more responsive layout
             cols = st.columns(len(suggestions))
