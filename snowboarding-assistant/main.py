@@ -117,6 +117,8 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
      
         # If needed, perform web search
         search_results = ""
+        search_links = []  # New list to store search result links
+        
         if needs_search:
             # Check if we've exceeded the Tavily usage limit
             usage_count, limit_exceeded = check_tavily_usage()
@@ -128,7 +130,22 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                 system_context += "\nNOTE: Web search functionality is currently unavailable due to reaching the monthly request limit. " \
                                   "Please provide answers based on your existing knowledge only."
             else:
-                search_results = tavily_search_tool.run(search_query)
+                # Get the raw search results
+                raw_results = tavily_search_tool.run(search_query, return_links=True)  # Modified to return links
+                
+                # Extract links from the results
+                if isinstance(raw_results, dict) and 'links' in raw_results:
+                    search_links = raw_results['links']
+                    search_results = raw_results['content']
+                else:
+                    # Fallback for backward compatibility
+                    search_results = raw_results
+                    # Try to extract links from the text
+                    for line in search_results.split('\n'):
+                        if line.startswith('URL:'):
+                            url = line.replace('URL:', '').strip()
+                            if url and url not in search_links:
+                                search_links.append(url)
 
         # Create the final response
         messages = [
@@ -166,9 +183,20 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         
         # Add search results if available
         if search_results:
+            # Modify the system message to instruct the model to include sources
             messages.append({
                 "role": "system",
-                "content": f"Web search results:\n{search_results}\nUse this information in your response when relevant."
+                "content": f"""Web search results:
+{search_results}
+
+Use this information in your response when relevant. 
+IMPORTANT: At the end of your response, include a "Sources:" section that lists the websites you referenced, using the following format:
+
+Sources:
+- [Source Title 1](URL1)
+- [Source Title 2](URL2)
+
+Only include sources that were actually relevant to your response."""
             })
         
         # Make sure the current prompt is included as the last user message
@@ -188,7 +216,17 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             temperature=0.7
         )
         
-        return chat_completion.choices[0].message.content
+        response = chat_completion.choices[0].message.content
+        
+        # If we have search links but the model didn't include them, append them manually
+        if search_links and "Sources:" not in response:
+            sources_section = "\n\n**Sources:**\n"
+            for i, url in enumerate(search_links[:3]):  # Limit to 3 sources
+                sources_section += f"- [Source {i+1}]({url})\n"
+            
+            response += sources_section
+        
+        return response
     except Exception as e:
         error_message = f"Error getting response: {str(e)}"
         logger.error(f"Error: {error_message}")
