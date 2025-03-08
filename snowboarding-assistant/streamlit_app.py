@@ -10,7 +10,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MAX_MESSAGE_COUNT = 10  # Set the maximum number of messages allowed per conversation
+MAX_MESSAGE_COUNT = 12  # Set the maximum number of messages allowed per conversation
 
 if 'prompt_count' not in st.session_state:
     st.session_state.prompt_count = 0
@@ -145,7 +145,7 @@ st.write("Ask me anything about planning your snowboarding season, trips, or gea
 
 # Add a prominent note about the sidebar for location sharing
 st.markdown(
-    "<small style='color: green; font-size: 12px;'>💡 Enable <strong>location sharing</strong> in sidebar for a personalized experience.</small>",
+    "<small style='color: green; font-size: 14px;'>💡 Use sidebar to enable share location/request features.</small>",
     unsafe_allow_html=True
 )
 
@@ -204,6 +204,18 @@ with st.sidebar:
         st.info(f"You have {remaining_messages} messages remaining in this free session.")
     else:
         st.warning("You've reached the free tier limit.")
+
+    # Add a divider after the usage information
+    st.divider()
+    
+    # Feature requests section
+    st.subheader("Feature requests")
+    st.markdown(
+        "Got ideas on how we can make the Snowboarding Assistant even better? "
+        "Send an email to **rshah26.pm@gmail.com** or contribute directly to the "
+        "project @ [GitHub](https://github.com/rshah26-pm/snowboarding-assistant)",
+        unsafe_allow_html=True
+    )
 
 # Handle the location data from query parameters
 location_param = st.query_params.get('location_data')
