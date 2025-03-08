@@ -57,7 +57,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         
         IMPORTANT: When users ask about nearby resorts or location-based recommendations but haven't shared their location, 
         explicitly tell them to "check the sidebar and enable location sharing by clicking the checkbox labeled 
-        '📍 Share my location for personalized resort recommendations'". Make it clear that the sidebar can be 
+        '📍 Share my location'". Make it clear that the sidebar can be 
         accessed by clicking the expand arrow in the top-left corner of the screen.
         
         IMPORTANT: Remember the conversation history and maintain context between messages. Refer back to previous questions and answers when relevant.

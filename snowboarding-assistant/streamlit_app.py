@@ -145,7 +145,7 @@ st.write("Ask me anything about planning your snowboarding season, trips, or gea
 
 # Add a prominent note about the sidebar for location sharing
 st.markdown(
-    "<small style='color: green;'>💡 Enable <strong>location sharing</strong> in the sidebar for personalized responses.</small>",
+    "<small style='color: green; font-size: 12px;'>💡 Enable <strong>location sharing</strong> in sidebar for a personalized experience.</small>",
     unsafe_allow_html=True
 )
 
