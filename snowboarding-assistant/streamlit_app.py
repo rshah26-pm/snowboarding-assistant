@@ -157,7 +157,7 @@ with st.sidebar:
     location_consent = st.checkbox(
         "📍 Share my location",
         value=st.session_state.location_consent,
-        help="Your location will be used to calculate distances to ski resorts",
+        help="Your location will be used for personalized recommendations like distance to resorts and local weather",
         key="location_consent_checkbox"
     )
     
@@ -173,7 +173,7 @@ with st.sidebar:
             # Initialize geolocation when consent is given
             add_debug_info("Consent given, initializing geolocation")
             init_geolocation()
-            st.info("Requesting your location... Please allow location access in your browser and wait for a few seconds.")
+            st.info("Requesting your location... Please allow location access in your browser and wait a few seconds.")
         else:
             # Clear location data when consent is revoked
             add_debug_info("Consent revoked, clearing location data")
@@ -186,12 +186,14 @@ with st.sidebar:
     # Display current location if available
     if st.session_state.user_location:
         add_debug_info(f"Displaying location: {st.session_state.user_location['address']}")
-        st.success(f"📍 Using location: {st.session_state.user_location['address']}")
+        st.success(f"📍 Using your live location now.")
+        #st.success(f"📍 Using location: {st.session_state.user_location['address']}")
 
     # Add a divider
     st.divider()
-    
+
     # Show usage information
+
     st.subheader("Usage Information")
     remaining_messages = max(0, MAX_MESSAGE_COUNT - st.session_state.message_count)
     
@@ -201,7 +203,7 @@ with st.sidebar:
     
     # Show remaining messages
     if remaining_messages > 0:
-        st.info(f"You have {remaining_messages} messages remaining in this free session.")
+        st.info(f"{remaining_messages} messages left in this free session.")
     else:
         st.warning("You've reached the free tier limit.")
 
