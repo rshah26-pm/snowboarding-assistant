@@ -6,7 +6,6 @@ from geopy.distance import geodesic
 from config import TAVILY_API_KEY, check_tavily_usage
 import logging  # Import the logging module
 import requests
-from bs4 import BeautifulSoup
 import re
 
 # Configure the logger
