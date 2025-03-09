@@ -5,6 +5,7 @@ from tools import resort_distance_calculator, tavily_search_tool
 from dotenv import load_dotenv
 from config import GROQ_API_KEY, check_tavily_usage  # Import API keys and check_tavily_usage function
 import logging
+import json
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,10 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         str: The AI assistant's response
     """
     try:
+        # Initialize search tracking variables
+        search_links = []
+        search_used = False
+        
         # Load environment variables from .env file
         load_dotenv()
 
@@ -29,11 +34,9 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         def get_api_key(key_name):
             # First try to get from Streamlit secrets
             if key_name in st.secrets:
-                logger.info(f"Using {key_name} from Streamlit secrets")
                 return st.secrets[key_name]
             # Then try to get from environment variables
             elif key_name in os.environ:
-                logger.info(f"Using {key_name} from environment variables")
                 return os.environ[key_name]
             else:
                 logger.warning(f"{key_name} not found in secrets or environment variables")
@@ -74,7 +77,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         - "Jibbing" (tricks on non-snow features)
         - "Park rat" (someone who spends time in terrain parks)
         
-        Keep your tone enthusiastic but not over-the-top. Use these terms naturally where they fit, not in every response. Don't over-use the term "dude" when referring to the user. 
+        Keep your tone enthusiastic but not over-the-top. Use these terms naturally where they fit, not in every response. Don't use the term "dude" when referring to the user. 
         Be knowledgeable but approachable, like a friend who loves snowboarding and wants to share their passion.
         
         IMPORTANT: Remember the conversation history and maintain context between messages. Refer back to previous questions and answers when relevant.
@@ -98,7 +101,6 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             logger.info(f"Location data provided to AI: {address}")
         else:
             system_context += "\nThe user has not shared their location. If they ask about nearby resorts, suggest they enable location sharing for personalized recommendations."
-            logger.info("No location data available for AI")
 
         # Check if the user is asking about location-based recommendations
         location_keywords = ["near me", "nearby", "closest", "nearest", "my location", "my area", "distance", "how far"]
@@ -113,11 +115,10 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             messages=[
                 {
                     "role": "system", 
-                    "content": """First determine if this query requires current information from web search.  This could be because of the need for factual current information like weather, conditions, prices, etc
-                    If NO, respond with just 'NO'.
-                    If YES, respond with 'YES:' followed by a search query optimized to find the specific real-time information needed.
+                    "content": """You can leverage the web search tool to find current information like weather conditions, ongoing sales/deals/prices for cheap equipment, etc. This is very important in terms of ensuring you are providing the most accurate and up-to-date and valuable information to the user. So use it pro-actively, for example, if you see the word "cheap" in the user's query, you should use the web search tool to find the best deals. If you see the word "weather" in the user's query, you should use the web search tool to find the current weather conditions.
+                    If you determine the user's query does not require web search, respond with just 'NO'.
+                    If you determine the user's query does equire web search, respond with 'YES:' followed by a search query optimized for a search engine to retrieve the specific information needed. We want to be as specific as possible.
                     Keep the search query concise and specific, and use a simple sentence with no special characters or formatting. Keep it less than 200 characters.
-                    Focus the search query on factual current information like weather, conditions, prices, etc.
                     """
                 },
                 {
@@ -142,25 +143,31 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         search_links = []  # New list to store search result links
         
         if needs_search:
+            logger.info(f"Web search needed for query: '{search_query}'")
             # Check if we've exceeded the Tavily usage limit
             usage_count, limit_exceeded = check_tavily_usage()
             
             if limit_exceeded:
+                logger.info("Tavily usage limit exceeded, skipping web search")
                 search_results = "Web search is currently unavailable as we've reached our monthly limit of 600 requests. " \
                                  "I'll answer based on my existing knowledge."
                 # Also add this to the system context
                 system_context += "\nNOTE: Web search functionality is currently unavailable due to reaching the monthly request limit. " \
                                   "Please provide answers based on your existing knowledge only."
             else:
+                logger.info(f"Performing Tavily search with query: '{search_query}'")
                 # Get the raw search results
-                raw_results = tavily_search_tool.run(search_query, return_links=True)  # Modified to return links
+                raw_results = tavily_search_tool.run(search_query, return_links=True)
                 
                 # Extract links from the results
                 if isinstance(raw_results, dict) and 'links' in raw_results:
                     search_links = raw_results['links']
                     search_results = raw_results['content']
+                    logger.info(f"Received {len(search_links)} links from Tavily search")
+                    logger.info(f"Search links: {json.dumps(search_links)}")
                 else:
                     # Fallback for backward compatibility
+                    logger.info("Received search results in legacy format, extracting links")
                     search_results = raw_results
                     # Try to extract links from the text
                     for line in search_results.split('\n'):
@@ -168,6 +175,8 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                             url = line.replace('URL:', '').strip()
                             if url and url not in search_links:
                                 search_links.append(url)
+                    logger.info(f"Extracted {len(search_links)} links from legacy format")
+                    logger.info(f"Extracted links: {json.dumps(search_links)}")
 
         # Create the final response
         messages = [
@@ -194,32 +203,38 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             
             # Add the filtered history to messages
             messages.extend(history_to_include)
-            logger.info(f"Added {len(history_to_include)} messages from history")
         else:
             # If no history, just add the current prompt
-            logger.info("No conversation history provided")
             messages.append({
                 "role": "user",
                 "content": user_prompt
             })
         
-        # Add search results if available
+        # Add search results if available but don't ask the model to format sources
         if search_results:
-            # Modify the system message to instruct the model to include sources
+            logger.info("Adding search results to the prompt")
+            # Format the links in a way that's easy for the model to use
+            formatted_links = ""
+            if search_links:
+                formatted_links = "\n\nRelevant sources:\n"
+                for i, link in enumerate(search_links[:5]):  # Limit to 5 sources
+                    formatted_links += f"{i+1}. {link}\n"
+            
+            # Modify the system message to instruct the model to use search results
+            # but NOT to include sources (we'll handle that ourselves)
             messages.append({
                 "role": "system",
                 "content": f"""Web search results:
 {search_results}
+{formatted_links}
 
-Use this information in your response when relevant. 
-IMPORTANT: At the end of your response, include a "Sources:" section that lists the websites you referenced, using the following format:
-
-Sources:
-- [Source Title 1](URL1)
-- [Source Title 2](URL2)
-
-Only include sources that were actually relevant to your response."""
+Use this information in your response when relevant. DO NOT include links in your response. DO NOT include a Sources section at the end of your response.
+"""
             })
+            
+            # Set flag to indicate search was used
+            search_used = True
+            logger.info("Search was used to gather additional information for the response.")
         
         # Make sure the current prompt is included as the last user message
         if not (messages[-1]["role"] == "user" and messages[-1]["content"] == user_prompt):
@@ -228,10 +243,7 @@ Only include sources that were actually relevant to your response."""
                 "content": user_prompt
             })
         
-        # Log the final message structure
-        logger.info(f"Sending {len(messages)} messages to Groq")
-        logger.info(f"Messages: {messages}")
-        
+        logger.info("Sending request to Groq API")
         chat_completion = groq_client.chat.completions.create(
             messages=messages,
             model="llama3-8b-8192",
@@ -239,15 +251,50 @@ Only include sources that were actually relevant to your response."""
         )
         
         response = chat_completion.choices[0].message.content
+        logger.info("Received response from Groq API")        
         
-        # If we have search links but the model didn't include them, append them manually
-        if search_links and "Sources:" not in response:
-            sources_section = "\n\n**Sources:**\n"
-            for i, url in enumerate(search_links[:3]):  # Limit to 3 sources
-                sources_section += f"- [Source {i+1}]({url})\n"
+        # Check if there's a Google URL in the search links
+        google_url = None
+
+        # Deterministically append sources if search was used
+        if search_links and search_used:
+            logger.info("Deterministically appending sources to response")
             
-            response += sources_section
-        
+            # Remove any existing sources section if present
+            if "Sources:" in response:
+                logger.info("Removing existing Sources section from response")
+                response = response.split("Sources:")[0].strip()
+            
+            # Add a clean sources section
+            sources_section = "\n\n**Sources:**\n"
+            used_links = 0
+            
+            for i, url in enumerate(search_links[:5]):  # Limit to 5 sources                
+                # Extract domain for more descriptive title
+                try:
+                    if "google.com" in url:
+                        google_url = url
+                        logger.info(f"Skipping Google URL: {url}")
+                        continue
+                    domain = url.split('//')[1].split('/')[0] if '//' in url else url
+                    sources_section += f"- [{domain}]({url})\n"
+                    used_links += 1
+                except Exception as e:
+                    logger.warning(f"Error formatting URL {url}: {str(e)}")
+            
+            # Only append if we have valid links
+            if used_links > 0:
+                response += sources_section
+                logger.info(f"Added {used_links} sources to response")
+            else:
+                logger.info("No valid sources to add")
+        else:
+            logger.info("No search links available or search not used, skipping sources")
+            # Append Google search query message if found
+        if google_url:
+            response += f"\n\nOh, and I found the following Google search query helpful in thinking through this, check it out: {google_url}"
+            logger.info("Added Google search query reference to response")
+
         return response
     except Exception as e:
         error_message = f"Error getting response: {str(e)}"

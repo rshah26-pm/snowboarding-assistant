@@ -4,6 +4,14 @@ import os
 import streamlit as st
 from geopy.distance import geodesic
 from config import TAVILY_API_KEY, check_tavily_usage
+import logging  # Import the logging module
+import requests
+from bs4 import BeautifulSoup
+import re
+
+# Configure the logger
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)  # Create a logger instance
 
 def web_search(query: str, return_links: bool = False) -> str:
     """
@@ -45,8 +53,8 @@ def web_search(query: str, return_links: bool = False) -> str:
     for result in search_results['results']:  # search_results is a list of dictionaries
         if isinstance(result, dict):  # verify it's a dictionary
             title = result.get('title', 'No title')
-            content = result.get('content', 'No content')
             url = result.get('url', 'No URL')
+            content = result.get('content', 'No content')
             
             # Add to summary
             summary.append(f"- {title}\nURL: {url}\nSummary: {content}\n")
@@ -54,8 +62,10 @@ def web_search(query: str, return_links: bool = False) -> str:
             # Add to links list
             if url and url not in links:
                 links.append(url)
-   
+
     formatted_summary = "\n".join(summary) if summary else "No results found."
+
+    logger.info(f"Links returned from Tavily search: {links}")
     
     # Return either just the summary or both summary and links
     if return_links:
