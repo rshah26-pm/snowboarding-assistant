@@ -39,11 +39,9 @@ python3 -m streamlit run ./snowboarding-assistant/streamlit_app.py
 ```
 
 ## Features
-- **AI agent framework**: The assistant is built using Langchain, an AI agent framework with tool use:
-    - **Web search**: The assistant can search the web for real-time information like weather, snow conditions, and resort information.
-    - **Location-based recommendations**: The assistant can use your location to recommend resorts near you.
-- **Natural Language Input**: Describe what you want to do in plain English (or other supported languages).
-- **Snowboarder-friendly responses and assistance**: The assistant is designed to be helpful and friendly to snowboarders.
+- **AI agent**: responds like a snowboarder & remembers context
+- **Web search tool-use**: uses live web info (ex: for weather conditions) & provides sources
+- **Location-aware responses**:uses location context for customized recommendations (with explicit consent/opt-in)
 - **Browser-based simple user interface**: Zero-friction to get going.
 
 ## Technologies Used
