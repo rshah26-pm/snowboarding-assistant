@@ -7,7 +7,7 @@ So you're all about the adventure, but not about the planning? Snowboarding assi
 
 Example of how you can super-charge your snowboarding journey with this assistant :rocket:
 
-![Example chat screenshot](assets/example-4-mini.png)
+![demo-snowboarding-assistant](https://github.com/user-attachments/assets/75ee42b3-849f-4679-adc5-65b6e1bfc906)
 
 ## Quick Start
 ### Hosted on Streamlit:
