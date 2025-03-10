@@ -186,7 +186,6 @@ with st.sidebar:
     # Display current location if available
     if st.session_state.user_location:
         st.success(f"📍 Using your live location now.")
-        #st.success(f"📍 Using location: {st.session_state.user_location['address']}")
 
     # Add a divider
     st.divider()
@@ -221,12 +220,10 @@ with st.sidebar:
 # Handle the location data from query parameters
 location_param = st.query_params.get('location_data')
 if location_param:
-    add_debug_info(f"Found location_data in query params: {location_param}")
     if st.session_state.location_consent:
         try:
             add_debug_info("Processing location data")
             lat, lon = map(float, location_param.split(','))
-            add_debug_info(f"Parsed coordinates: {lat}, {lon}")
             
             # Convert coordinates to location name
             add_debug_info("Converting coordinates to location name")
@@ -238,7 +235,6 @@ if location_param:
                 'coordinates': (lat, lon),
                 'address': location_data.address
             }
-            add_debug_info(f"Stored location in session state: {st.session_state.user_location}")
             
             # Reset the location requested flag
             st.session_state.location_requested = False
@@ -358,7 +354,6 @@ def process_user_input(prompt):
                     location_param = st.query_params.get('location_data')
                     if location_param:
                         try:
-                            add_debug_info(f"Found location_data while waiting: {location_param}")
                             lat, lon = map(float, location_param.split(','))
                             
                             # Convert coordinates to location name
@@ -370,7 +365,6 @@ def process_user_input(prompt):
                                 'coordinates': (lat, lon),
                                 'address': location_data.address
                             }
-                            add_debug_info(f"Successfully obtained location: {st.session_state.user_location}")
                             break
                             
                         except Exception as e:
@@ -386,9 +380,7 @@ def process_user_input(prompt):
                         time.sleep(10)
                 
                 # Log location status before getting response
-                if st.session_state.user_location:
-                    add_debug_info(f"Using location for response: {st.session_state.user_location}")
-                else:
+                if not st.session_state.user_location:
                     add_debug_info("No location data available for response")
                 
                 # Pass conversation history to get_snowboard_assistant_response
