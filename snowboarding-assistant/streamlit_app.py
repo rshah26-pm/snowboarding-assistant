@@ -185,7 +185,6 @@ with st.sidebar:
     
     # Display current location if available
     if st.session_state.user_location:
-        add_debug_info(f"Displaying location: {st.session_state.user_location['address']}")
         st.success(f"📍 Using your live location now.")
         #st.success(f"📍 Using location: {st.session_state.user_location['address']}")
 
@@ -233,7 +232,6 @@ if location_param:
             add_debug_info("Converting coordinates to location name")
             geolocator = Nominatim(user_agent="snowboarding_assistant")
             location_data = geolocator.reverse((lat, lon))
-            add_debug_info(f"Got location data: {location_data.address}")
             
             # Store in session state
             st.session_state.user_location = {
