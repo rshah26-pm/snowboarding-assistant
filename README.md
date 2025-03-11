@@ -51,7 +51,6 @@ python3 -m streamlit run ./snowboarding-assistant/streamlit_app.py
 - Tavily (web search)
 - Geopy (location services)
 - Langchain (AI agent framework)
-- Cursor (not part of the app, but certainly a part of how the app was built :wink:)
 
 ## Configuration
 Snowboarding assistant can be configured through environment variables or a streamlit config file.
