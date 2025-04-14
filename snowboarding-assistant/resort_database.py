@@ -12,7 +12,12 @@ logger = logging.getLogger(__name__)
 DB_PATH = os.path.join(os.path.dirname(__file__), 'resorts.db')
 
 def init_database():
-    """Initialize the SQLite database with the resorts table."""
+    """
+    Initializes the SQLite database and creates the resorts table if it does not exist.
+    
+    Returns:
+        True if the database and table are successfully initialized, False otherwise.
+    """
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
@@ -39,7 +44,12 @@ def init_database():
         return False
 
 def populate_resorts():
-    """Populate the database with resort data."""
+    """
+    Populates the resorts database with a predefined list of ski resorts.
+    
+    If the database is empty, inserts resort records with geographic and regional data.
+    Returns True if the operation succeeds, or False if an error occurs or data already exists.
+    """
     # Dictionary of ski resorts with coordinates
     ski_resorts = {
         # Western US - California, Nevada, Utah
@@ -175,16 +185,16 @@ def populate_resorts():
 
 def get_closest_resorts(lat: float, lon: float, query: str = "", limit: int = 5) -> List[Dict[str, Any]]:
     """
-    Get the closest resorts to the given coordinates.
+    Finds the closest ski resorts to the specified coordinates, optionally filtered by a search query.
     
     Args:
-        lat: User's latitude
-        lon: User's longitude
-        query: Optional search query to filter resorts
-        limit: Maximum number of resorts to return
-        
+        lat: Latitude of the reference location.
+        lon: Longitude of the reference location.
+        query: Optional text to filter resorts by name, region, state, or country.
+        limit: Maximum number of resorts to return.
+    
     Returns:
-        List of resort dictionaries with distance added
+        A list of dictionaries representing the closest resorts, each including a 'distance' key with the distance in miles.
     """
     try:
         conn = sqlite3.connect(DB_PATH)

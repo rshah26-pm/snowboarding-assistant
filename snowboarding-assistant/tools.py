@@ -84,7 +84,11 @@ tavily_search_tool = Tool(
 )
 
 def get_user_to_resort_distance(query: str = "") -> str:
-    """Get user's location and return relevant information for snowboarding recommendations."""
+    """
+    Provides a list of the five closest ski resorts to the user's current location, including distances and resort details.
+    
+    If location access is not granted, prompts the user to enable location sharing. Returns a formatted summary with the user's address, a list of nearby resorts with distances, and highlights the two closest resorts. If no resorts are found matching the query, informs the user accordingly. Returns an error message if location data cannot be processed.
+    """
     print(f"🔧 Using tool: resort_distance_calculator")  # Log tool usage
     
     if 'user_location' not in st.session_state or not st.session_state.user_location:
