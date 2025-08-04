@@ -40,7 +40,7 @@ numpy==2.2.3
 orjson==3.10.15
 packaging==24.2
 pandas==2.2.3
-pillow==11.1.0
+pillow>=9.0.0
 propcache==0.3.0
 protobuf==5.29.3
 pyarrow==19.0.1
@@ -73,3 +73,4 @@ urllib3==2.3.0
 watchdog==6.0.0
 yarl==1.18.3
 zstandard==0.23.0
+google-generativeai>=0.7.0
