@@ -110,7 +110,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         if is_location_query and not st.session_state.get('user_location'):
             system_context += "\nThe user is asking about location-based recommendations, but they haven't shared their location. Make sure to suggest they enable location sharing."
 
-        # First, determine if we need web search and get optimized search query
+        # Intent classification: determine if we need web search tool call and get optimized search query
         planning_message = groq_client.chat.completions.create(
             messages=[
                 {
@@ -126,7 +126,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                     "content": user_prompt
                 }
             ],
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
             temperature=0.1
         )
 
@@ -246,7 +246,7 @@ Use this information in your response when relevant. DO NOT include links in you
         logger.info("Sending request to Groq API")
         chat_completion = groq_client.chat.completions.create(
             messages=messages,
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",
             temperature=0.7
         )
         
