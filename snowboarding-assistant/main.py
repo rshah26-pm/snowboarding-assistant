@@ -27,6 +27,11 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         # --- PROMPT VERSION CONTROL ---
         RESPONSE_PROMPT_VERSION = "v1"  # Change to 'v2' for A/B testing
         INTENT_PROMPT_VERSION = "v1"    # Change to 'v2' for A/B testing
+        LOCATION_PROMPT_VERSION = "v1"
+        WEB_SEARCH_PROMPT_VERSION = "v1"
+        WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION = "v1"
+        NO_LOCATION_PROMPT_VERSION = "v1"
+        LOCATION_SHARING_PROMPT_VERSION = "v1"
 
         # Initialize search tracking variables
         search_links = []
@@ -57,22 +62,25 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             address = location_data['address']
             
             # Run the location tool to get distances
-            location_info = resort_distance_calculator.run("")
+            location_info = resort_distance_calculator.run("")            
+            location_context_template = get_prompt("location_context", LOCATION_PROMPT_VERSION)
+            location_context = location_context_template.format(
+                address=address,
+                lat=lat,
+                lon=lon,
+                location_info=location_info
+            )
+            system_context += "\n" + location_context
             
-            # Add location context to system prompt
-            system_context += f"\nUser's current location: {address} (Coordinates: {lat}, {lon})\n"
-            system_context += f"\nLocation details:\n{location_info}\n"
-            system_context += "\nUse this location information when making recommendations about nearby resorts."
-            
-            logger.info(f"Location data provided to AI: {address}")
+            logger.info(f"Location data provided: {address}")
         else:
-            system_context += "\nThe user has not shared their location. If they ask about nearby resorts, suggest they enable location sharing for personalized recommendations."
+            system_context = "\n" + get_prompt("no_location_shared", NO_LOCATION_PROMPT_VERSION)
 
         # Check if the user is asking about location-based recommendations
         location_keywords = ["near me", "nearby", "closest", "nearest", "my location", "my area", "distance", "how far"]
         is_location_query = any(keyword in user_prompt.lower() for keyword in location_keywords)
         if is_location_query and not st.session_state.get('user_location'):
-            system_context += "\nThe user is asking about location-based recommendations, but they haven't shared their location. Make sure to suggest they enable location sharing."
+            system_context += "\n" + get_prompt("location_sharing_suggestion", LOCATION_SHARING_PROMPT_VERSION)
 
         # --- INTENT CLASSIFIER PROMPT ---
         intent_classifier_prompt = get_prompt("intent_classifier", INTENT_PROMPT_VERSION)
@@ -111,8 +119,8 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                 logger.info("Tavily usage limit exceeded, skipping web search")
                 search_results = "Web search is currently unavailable as we've reached our monthly limit of 600 requests. " \
                                  "I'll answer based on my existing knowledge."
-                system_context += "\nNOTE: Web search functionality is currently unavailable due to reaching the monthly request limit. " \
-                                  "Please provide answers based on your existing knowledge only."
+                # Use the prompt from prompts.json for the "web search unavailable" message
+                search_results = "\n" + get_prompt("web_search_unavailable", WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION)
             else:
                 logger.info(f"Performing Tavily search with query: '{search_query}'")
                 raw_results = tavily_search_tool.run(search_query, return_links=True)
