@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from config import GROQ_API_KEY, check_tavily_usage  # Import API keys and check_tavily_usage function
 import logging
 import json
+from prompts import get_prompt  # <-- NEW: import the prompt loader
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
@@ -23,19 +24,19 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         str: The AI assistant's response
     """
     try:
+        # --- PROMPT VERSION CONTROL ---
+        RESPONSE_PROMPT_VERSION = "v1"  # Change to 'v2' for A/B testing
+        INTENT_PROMPT_VERSION = "v1"    # Change to 'v2' for A/B testing
+
         # Initialize search tracking variables
         search_links = []
         search_used = False
-        
-        # Load environment variables from .env file
         load_dotenv()
 
         # Function to get API keys
         def get_api_key(key_name):
-            # First try to get from Streamlit secrets
             if key_name in st.secrets:
                 return st.secrets[key_name]
-            # Then try to get from environment variables
             elif key_name in os.environ:
                 return os.environ[key_name]
             else:
@@ -44,44 +45,9 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
 
         # Initialize Groq client
         groq_client = Groq(api_key=GROQ_API_KEY)
-        
-        # Create the base system context
-        system_context = """You are a helpful and enthusiastic snowboarding assistant that helps users plan their season and trips.
-        You have access to two tools:
-        1. A web search tool for current information about snowboarding resorts, conditions, and gear
-        2. A location tool that provides distances to major ski resorts
-        
-        When making resort recommendations or helping with trip planning:
-        - If the user has shared their location, use the get_location_info tool to find nearby resorts
-        - Consider travel distance when making recommendations
-        - Use the web_search tool for current conditions and resort information
-        
-        Always prioritize resorts that are closer to the user's location when they ask about nearby options.
-        
-        IMPORTANT: When users ask about nearby resorts or location-based recommendations but haven't shared their location, 
-        explicitly tell them to "check the sidebar and enable location sharing by clicking the checkbox labeled 
-        '📍 Share my location'". Make it clear that the sidebar can be 
-        accessed by clicking the expand arrow in the top-left corner of the screen.
 
-        Never make the user feel pressured to share their location.
-        
-        STYLE GUIDE: Use snowboarder lingo and casual language to make your responses fun and engaging. Sprinkle in phrases like:
-        - "Shred the gnar" (to snowboard aggressively on challenging terrain)
-        - "Fresh pow" (fresh powder snow)
-        - "Stoked" (excited)
-        - "Sick" or "Rad" (awesome, cool)
-        - "Sending it" (going for it, taking risks)
-        - "Carving" (making clean turns)
-        - "Catching air" (jumping)
-        - "Bombing" (going downhill fast)
-        - "Jibbing" (tricks on non-snow features)
-        - "Park rat" (someone who spends time in terrain parks)
-        
-        Keep your tone enthusiastic but not over-the-top. Use these terms naturally where they fit, not in every response. Don't use the term "dude" when referring to the user. 
-        Be knowledgeable but approachable, like a friend who loves snowboarding and wants to share their passion.
-        
-        IMPORTANT: Remember the conversation history and maintain context between messages. Refer back to previous questions and answers when relevant.
-        """
+        # --- SYSTEM PROMPT (RESPONSE GENERATION) ---
+        system_context = get_prompt("response_generation", RESPONSE_PROMPT_VERSION)
 
         # Add location context if available
         if st.session_state.get('user_location'):
@@ -105,21 +71,16 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         # Check if the user is asking about location-based recommendations
         location_keywords = ["near me", "nearby", "closest", "nearest", "my location", "my area", "distance", "how far"]
         is_location_query = any(keyword in user_prompt.lower() for keyword in location_keywords)
-        
-        # If it's a location query but we don't have location data, add a note
         if is_location_query and not st.session_state.get('user_location'):
             system_context += "\nThe user is asking about location-based recommendations, but they haven't shared their location. Make sure to suggest they enable location sharing."
 
-        # Intent classification: determine if we need web search tool call and get optimized search query
+        # --- INTENT CLASSIFIER PROMPT ---
+        intent_classifier_prompt = get_prompt("intent_classifier", INTENT_PROMPT_VERSION)
         planning_message = groq_client.chat.completions.create(
             messages=[
                 {
-                    "role": "system", 
-                    "content": """You can leverage the web search tool to find current information like weather conditions, ongoing sales/deals/prices for cheap equipment, etc. This is very important in terms of ensuring you are providing the most accurate and up-to-date and valuable information to the user. So use it pro-actively, for example, if you see the word "cheap" in the user's query, you should use the web search tool to find the best deals. If you see the word "weather" in the user's query, you should use the web search tool to find the current weather conditions.
-                    If you determine the user's query does not require web search, respond with just 'NO'.
-                    If you determine the user's query does equire web search, respond with 'YES:' followed by a search query optimized for a search engine to retrieve the specific information needed. We want to be as specific as possible.
-                    Keep the search query concise and specific, and use a simple sentence with no special characters or formatting. Keep it less than 200 characters.
-                    """
+                    "role": "system",
+                    "content": intent_classifier_prompt
                 },
                 {
                     "role": "user",
@@ -140,8 +101,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
      
         # If needed, perform web search
         search_results = ""
-        search_links = []  # New list to store search result links
-        
+        search_links = []
         if needs_search:
             logger.info(f"Web search needed for query: '{search_query}'")
             # Check if we've exceeded the Tavily usage limit
@@ -151,12 +111,10 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                 logger.info("Tavily usage limit exceeded, skipping web search")
                 search_results = "Web search is currently unavailable as we've reached our monthly limit of 600 requests. " \
                                  "I'll answer based on my existing knowledge."
-                # Also add this to the system context
                 system_context += "\nNOTE: Web search functionality is currently unavailable due to reaching the monthly request limit. " \
                                   "Please provide answers based on your existing knowledge only."
             else:
                 logger.info(f"Performing Tavily search with query: '{search_query}'")
-                # Get the raw search results
                 raw_results = tavily_search_tool.run(search_query, return_links=True)
                 
                 # Extract links from the results
@@ -188,20 +146,14 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         
         # Add conversation history if provided
         if conversation_history:
-            # Log the conversation history for debugging
             logger.info(f"Adding conversation history with {len(conversation_history)} messages")
-            
-            # Only include the last few messages to stay within token limits
-            # Skip system messages and only include user and assistant messages
             history_to_include = []
-            for message in conversation_history[-8:]:  # Include up to 8 recent messages (4 exchanges)
+            for message in conversation_history[-8:]:
                 if message["role"] in ["user", "assistant"]:
                     history_to_include.append({
                         "role": message["role"],
                         "content": message["content"]
                     })
-            
-            # Add the filtered history to messages
             messages.extend(history_to_include)
         else:
             # If no history, just add the current prompt
@@ -213,59 +165,40 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         # Add search results if available but don't ask the model to format sources
         if search_results:
             logger.info("Adding search results to the prompt")
-            # Format the links in a way that's easy for the model to use
             formatted_links = ""
             if search_links:
                 formatted_links = "\n\nRelevant sources:\n"
                 for i, link in enumerate(search_links[:5]):  # Limit to 5 sources
                     formatted_links += f"{i+1}. {link}\n"
             
-            # Modify the system message to instruct the model to use search results
-            # but NOT to include sources (we'll handle that ourselves)
             messages.append({
                 "role": "system",
-                "content": f"""Web search results:
-{search_results}
-{formatted_links}
-
-Use this information in your response when relevant. DO NOT include links in your response. DO NOT include a Sources section at the end of your response.
-"""
+                "content": f"""Web search results:\n{search_results}\n{formatted_links}\n\nUse this information in your response when relevant. DO NOT include links in your response. DO NOT include a Sources section at the end of your response.\n"""
             })
-            
-            # Set flag to indicate search was used
             search_used = True
             logger.info("Search was used to gather additional information for the response.")
-        
-        # Make sure the current prompt is included as the last user message
+
         if not (messages[-1]["role"] == "user" and messages[-1]["content"] == user_prompt):
             messages.append({
                 "role": "user",
                 "content": user_prompt
             })
-        
+
         logger.info("Sending request to Groq API")
         chat_completion = groq_client.chat.completions.create(
             messages=messages,
             model="llama-3.1-8b-instant",
             temperature=0.7
         )
-        
         response = chat_completion.choices[0].message.content
-        logger.info("Received response from Groq API")        
-        
-        # Check if there's a Google URL in the search links
-        google_url = None
+        logger.info("Received response from Groq API")
 
-        # Deterministically append sources if search was used
+        google_url = None
         if search_links and search_used:
             logger.info("Deterministically appending sources to response")
-            
-            # Remove any existing sources section if present
             if "Sources:" in response:
                 logger.info("Removing existing Sources section from response")
                 response = response.split("Sources:")[0].strip()
-            
-            # Add a clean sources section
             sources_section = "\n\n**Sources:**\n"
             used_links = 0
             
