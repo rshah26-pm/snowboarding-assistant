@@ -1,6 +1,7 @@
 from langchain.tools import Tool
 import streamlit as st
 from geopy.distance import geodesic
+from tool_config import get_tool_version, get_tool_description
 import logging
 
 # Configure the logger
@@ -152,9 +153,6 @@ The closest resorts to your location are {closest_two[0][0]} ({int(closest_two[0
 # Define the tool
 resort_distance_calculator = Tool(
     name="resort_distance_calculator",
-    description="""Use this tool to calculate distances from the user's location to nearby snowboarding resorts. 
-    It provides the user's location and distances to the 5 closest ski resorts.
-    Only use this when the user's query involves location-based recommendations, distance considerations, 
-    or travel planning. The tool returns distances to the closest ski resorts based on the user's current location.""",
+    description=get_tool_description("resort_distance_calculator", get_tool_version("resort_distance_calculator")),
     func=get_user_to_resort_distance
 ) 

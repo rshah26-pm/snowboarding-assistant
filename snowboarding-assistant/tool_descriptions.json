@@ -1,0 +1,63 @@
+{
+  "web_search": {
+    "v1": {
+      "description": "Useful for searching current information about snowboarding resorts, conditions, gear reviews, and related topics.",
+      "long_description": "Search the web for real-time information about snowboarding resorts, weather conditions, gear reviews, equipment prices, and other snowboarding-related topics. Use this tool when users ask about current conditions, recent events, or need up-to-date information that may not be in your training data.",
+      "use_cases": [
+        "Current weather conditions at resorts",
+        "Recent gear reviews and recommendations",
+        "Equipment prices and deals",
+        "Resort conditions and snow reports",
+        "Recent snowboarding events or news"
+      ],
+      "langchain_metadata": {
+        "return_direct": false,
+        "args_schema": null,
+        "tags": ["web_search", "snowboarding", "real_time"]
+      }
+    },
+    "v2": {
+      "description": "Search for current snowboarding information including resort conditions, weather, gear reviews, and equipment deals.",
+      "long_description": "Access real-time web information about snowboarding resorts, current weather conditions, gear reviews, equipment prices, and snowboarding news. This tool is essential for providing up-to-date information that may not be available in your training data.",
+      "use_cases": [
+        "Live weather and snow conditions",
+        "Current gear prices and sales",
+        "Recent resort reviews and updates",
+        "Snowboarding industry news",
+        "Equipment recommendations and comparisons"
+      ],
+      "langchain_metadata": {
+        "return_direct": false,
+        "args_schema": null,
+        "tags": ["web_search", "snowboarding", "real_time"]
+      }
+    }
+  },
+  "resort_distance_calculator": {
+    "v1": {
+      "description": "Use this tool to calculate distances from the user's location to nearby snowboarding resorts. It provides the user's location and distances to the 5 closest ski resorts. Only use this when the user's query involves location-based recommendations, distance considerations, or travel planning. The tool returns distances to the closest ski resorts based on the user's current location.",
+      "long_description": "Calculate distances from the user's current location to nearby snowboarding resorts. This tool provides personalized recommendations based on proximity, helping users find the closest resorts to their location. It returns the 5 nearest resorts with their distances in miles.",
+      "use_cases": [
+        "Finding nearby resorts",
+        "Travel planning and distance calculations",
+        "Location-based recommendations",
+        "Resort proximity comparisons"
+      ],
+      "langchain_metadata": {
+        "return_direct": false,
+        "args_schema": null,
+        "tags": ["location", "distance", "resorts", "snowboarding"]
+      }
+    },
+    "v2": {
+      "description": "Calculate distances to nearby snowboarding resorts from the user's location. Provides the 5 closest resorts with distances for travel planning and location-based recommendations.",
+      "long_description": "Get personalized resort recommendations based on the user's current location. This tool calculates distances to nearby snowboarding resorts and provides the 5 closest options with their distances in miles, helping with travel planning and location-based suggestions.",
+      "use_cases": [
+        "Nearby resort discovery",
+        "Travel distance planning",
+        "Location-based resort recommendations",
+        "Proximity-based resort comparisons"
+      ]
+    }
+  }
+} 
