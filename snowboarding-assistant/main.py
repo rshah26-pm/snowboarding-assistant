@@ -12,6 +12,48 @@ from prompts import get_prompt  # <-- NEW: import the prompt loader
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def build_system_context(user_prompt, RESPONSE_PROMPT_VERSION="v1", LOCATION_PROMPT_VERSION="v1", 
+                        NO_LOCATION_PROMPT_VERSION="v1", LOCATION_SHARING_PROMPT_VERSION="v1"):
+    """
+    Build the system context from prompts.json based on current state.
+    This separates the static system prompt from dynamic message content.
+    """
+    # Start with the base response generation prompt
+    system_context = get_prompt("response_generation", RESPONSE_PROMPT_VERSION)
+    
+    # Add location context if available
+    if st.session_state.get('user_location'):
+        location_data = st.session_state.user_location
+        lat, lon = location_data['coordinates']
+        address = location_data['address']
+        
+        # Run the location tool to get distances
+        location_info = resort_distance_calculator.run("")
+        
+        # Format location context using template from prompts.json
+        location_context_template = get_prompt("location_context", LOCATION_PROMPT_VERSION)
+        location_context = location_context_template.format(
+            address=address,
+            lat=lat,
+            lon=lon,
+            location_info=location_info
+        )
+        system_context += "\n" + location_context
+        logger.info(f"Location data provided: {address}")
+    else:
+        # Add no-location message from prompts.json
+        no_location_msg = get_prompt("no_location_shared", NO_LOCATION_PROMPT_VERSION)
+        system_context += "\n" + no_location_msg
+
+    # Check if the user is asking about location-based recommendations
+    location_keywords = ["near me", "nearby", "closest", "nearest", "my location", "my area", "distance", "how far"]
+    is_location_query = any(keyword in user_prompt.lower() for keyword in location_keywords)
+    if is_location_query and not st.session_state.get('user_location'):
+        location_suggestion = get_prompt("location_sharing_suggestion", LOCATION_SHARING_PROMPT_VERSION)
+        system_context += "\n" + location_suggestion
+    
+    return system_context
+
 def get_snowboard_assistant_response(user_prompt, conversation_history=None):
     """
     Get a response from the AI snowboarding assistant using Groq.
@@ -51,36 +93,14 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         # Initialize Groq client
         groq_client = Groq(api_key=GROQ_API_KEY)
 
-        # --- SYSTEM PROMPT (RESPONSE GENERATION) ---
-        system_context = get_prompt("response_generation", RESPONSE_PROMPT_VERSION)
-
-        # Add location context if available
-        if st.session_state.get('user_location'):
-            # Get location info directly from session state
-            location_data = st.session_state.user_location
-            lat, lon = location_data['coordinates']
-            address = location_data['address']
-            
-            # Run the location tool to get distances
-            location_info = resort_distance_calculator.run("")            
-            location_context_template = get_prompt("location_context", LOCATION_PROMPT_VERSION)
-            location_context = location_context_template.format(
-                address=address,
-                lat=lat,
-                lon=lon,
-                location_info=location_info
-            )
-            system_context += "\n" + location_context
-            
-            logger.info(f"Location data provided: {address}")
-        else:
-            system_context = "\n" + get_prompt("no_location_shared", NO_LOCATION_PROMPT_VERSION)
-
-        # Check if the user is asking about location-based recommendations
-        location_keywords = ["near me", "nearby", "closest", "nearest", "my location", "my area", "distance", "how far"]
-        is_location_query = any(keyword in user_prompt.lower() for keyword in location_keywords)
-        if is_location_query and not st.session_state.get('user_location'):
-            system_context += "\n" + get_prompt("location_sharing_suggestion", LOCATION_SHARING_PROMPT_VERSION)
+        # --- BUILD SYSTEM CONTEXT FROM PROMPTS.JSON ---
+        system_context = build_system_context(
+            user_prompt, 
+            RESPONSE_PROMPT_VERSION, 
+            LOCATION_PROMPT_VERSION,
+            NO_LOCATION_PROMPT_VERSION,
+            LOCATION_SHARING_PROMPT_VERSION
+        )
 
         # --- INTENT CLASSIFIER PROMPT ---
         intent_classifier_prompt = get_prompt("intent_classifier", INTENT_PROMPT_VERSION)
@@ -117,10 +137,8 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             
             if limit_exceeded:
                 logger.info("Tavily usage limit exceeded, skipping web search")
-                search_results = "Web search is currently unavailable as we've reached our monthly limit of 600 requests. " \
-                                 "I'll answer based on my existing knowledge."
                 # Use the prompt from prompts.json for the "web search unavailable" message
-                search_results = "\n" + get_prompt("web_search_unavailable", WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION)
+                search_results = get_prompt("web_search_unavailable", WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION)
             else:
                 logger.info(f"Performing Tavily search with query: '{search_query}'")
                 raw_results = tavily_search_tool.run(search_query, return_links=True)
@@ -144,7 +162,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                     logger.info(f"Extracted {len(search_links)} links from legacy format")
                     logger.info(f"Extracted links: {json.dumps(search_links)}")
 
-        # Create the final response
+        # --- BUILD MESSAGES ARRAY (FOCUSED ON CONVERSATION FLOW) ---
         messages = [
             {
                 "role": "system",
@@ -156,7 +174,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         if conversation_history:
             logger.info(f"Adding conversation history with {len(conversation_history)} messages")
             history_to_include = []
-            for message in conversation_history[-8:]:
+            for message in conversation_history[-8:]:  # Include up to 8 recent messages (4 exchanges)
                 if message["role"] in ["user", "assistant"]:
                     history_to_include.append({
                         "role": message["role"],
@@ -170,7 +188,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                 "content": user_prompt
             })
         
-        # Add search results if available but don't ask the model to format sources
+        # Add search results if available (as a separate system message)
         if search_results:
             logger.info("Adding search results to the prompt")
             formatted_links = ""
@@ -179,34 +197,51 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                 for i, link in enumerate(search_links[:5]):  # Limit to 5 sources
                     formatted_links += f"{i+1}. {link}\n"
             
+            # Use template from prompts.json for search results formatting
+            search_results_template = get_prompt("web_search_results", WEB_SEARCH_PROMPT_VERSION)
+            formatted_search_message = search_results_template.format(
+                search_results=search_results,
+                formatted_links=formatted_links
+            )
+            
             messages.append({
                 "role": "system",
-                "content": f"""Web search results:\n{search_results}\n{formatted_links}\n\nUse this information in your response when relevant. DO NOT include links in your response. DO NOT include a Sources section at the end of your response.\n"""
+                "content": formatted_search_message
             })
+            
             search_used = True
             logger.info("Search was used to gather additional information for the response.")
-
+        
+        # Make sure the current prompt is included as the last user message
         if not (messages[-1]["role"] == "user" and messages[-1]["content"] == user_prompt):
             messages.append({
                 "role": "user",
                 "content": user_prompt
             })
-
+        
         logger.info("Sending request to Groq API")
         chat_completion = groq_client.chat.completions.create(
             messages=messages,
             model="llama-3.1-8b-instant",
             temperature=0.7
         )
+        
         response = chat_completion.choices[0].message.content
-        logger.info("Received response from Groq API")
-
+        logger.info("Received response from Groq API")        
+        
+        # Check if there's a Google URL in the search links
         google_url = None
+
+        # Deterministically append sources if search was used
         if search_links and search_used:
             logger.info("Deterministically appending sources to response")
+            
+            # Remove any existing sources section if present
             if "Sources:" in response:
                 logger.info("Removing existing Sources section from response")
                 response = response.split("Sources:")[0].strip()
+            
+            # Add a clean sources section
             sources_section = "\n\n**Sources:**\n"
             used_links = 0
             
