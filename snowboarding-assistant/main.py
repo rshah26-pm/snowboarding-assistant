@@ -1,7 +1,8 @@
 import os
 from groq import Groq
 import streamlit as st
-from tools import resort_distance_calculator, tavily_search_tool
+from tools import resort_distance_calculator
+from web_search_tool import tavily_search_tool
 from dotenv import load_dotenv
 from config import GROQ_API_KEY, check_tavily_usage, INTENT_CLASSIFIER_MODEL, RESPONSE_GENERATION_MODEL  # Import API keys and check_tavily_usage function
 import logging
@@ -16,7 +17,6 @@ def build_system_context(user_prompt, RESPONSE_PROMPT_VERSION="v1", LOCATION_PRO
                         NO_LOCATION_PROMPT_VERSION="v1", LOCATION_SHARING_PROMPT_VERSION="v1"):
     """
     Build the system context from prompts.json based on current state.
-    This separates the static system prompt from dynamic message content.
     """
     # Start with the base response generation prompt
     system_context = get_prompt("response_generation", RESPONSE_PROMPT_VERSION)
@@ -46,6 +46,7 @@ def build_system_context(user_prompt, RESPONSE_PROMPT_VERSION="v1", LOCATION_PRO
         system_context += "\n" + no_location_msg
 
     # Check if the user is asking about location-based recommendations
+    # TODO: Implement a better way to do this
     location_keywords = ["near me", "nearby", "closest", "nearest", "my location", "my area", "distance", "how far"]
     is_location_query = any(keyword in user_prompt.lower() for keyword in location_keywords)
     if is_location_query and not st.session_state.get('user_location'):
@@ -56,7 +57,7 @@ def build_system_context(user_prompt, RESPONSE_PROMPT_VERSION="v1", LOCATION_PRO
 
 def get_snowboard_assistant_response(user_prompt, conversation_history=None):
     """
-    Get a response from the AI snowboarding assistant using Groq.
+    Get a response from the AI snowboarding assistant.
     
     Args:
         user_prompt (str): The user's question or request
@@ -91,6 +92,11 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                 return None
 
         # Initialize Groq client
+        if not GROQ_API_KEY:
+            error_msg = "GROQ_API_KEY not found in environment variables or Streamlit secrets"
+            logger.error(error_msg)
+            return f"Configuration error: {error_msg}. Please check your API key setup."
+        
         groq_client = Groq(api_key=GROQ_API_KEY)
 
         # --- BUILD SYSTEM CONTEXT FROM PROMPTS.JSON ---
@@ -220,14 +226,30 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             })
         
         logger.info("Sending request to Groq API")
-        chat_completion = groq_client.chat.completions.create(
-            messages=messages,
-            model=RESPONSE_GENERATION_MODEL,
-            temperature=0.7
-        )
         
-        response = chat_completion.choices[0].message.content
-        logger.info("Received response from Groq API")        
+        # Validate model name
+        if not RESPONSE_GENERATION_MODEL:
+            error_msg = "RESPONSE_GENERATION_MODEL not configured"
+            logger.error(error_msg)
+            return f"Configuration error: {error_msg}. Please check your model configuration."
+        
+        try:
+            chat_completion = groq_client.chat.completions.create(
+                messages=messages,
+                model=RESPONSE_GENERATION_MODEL,
+                temperature=0.7
+            )
+            
+            response = chat_completion.choices[0].message.content
+            logger.info("Received response from Groq API")
+        except Exception as api_error:
+            logger.error(f"Groq API error: {str(api_error)}")
+            logger.error(f"Error type: {type(api_error).__name__}")
+            # Try to get more details about the error
+            if hasattr(api_error, 'response'):
+                logger.error(f"Response status: {api_error.response.status_code}")
+                logger.error(f"Response text: {api_error.response.text}")
+            raise api_error        
         
         # Check if there's a Google URL in the search links
         google_url = None
