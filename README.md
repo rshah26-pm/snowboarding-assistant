@@ -55,6 +55,10 @@ python3 -m streamlit run ./snowboarding-assistant/streamlit_app.py
 ## Configuration
 Snowboarding assistant can be configured through environment variables or a streamlit config file.
 
+### Data management and agent orchestration
+- **Ski Resorts Data**: Resort coordinates are stored in `ski_resorts.csv` for easy maintenance and updates
+- **Tool Descriptions and system prompts**: Managed through JSON files for A/B testing and version control
+
 ## License
 MIT License. See [LICENSE](LICENSE) for details.
 
@@ -70,6 +74,7 @@ MIT License. See [LICENSE](LICENSE) for details.
 - geopy
 - python-dotenv
 - tavily-python
+- pandas
 
 ## Troubleshooting
 - **API Key Issues**: Ensure your API keys are correctly set in the .env file or as environment variables

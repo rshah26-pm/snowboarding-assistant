@@ -1,0 +1,90 @@
+resort_name,latitude,longitude,region,country
+Heavenly,38.9353,-119.9400,Western US - California,Nevada
+Northstar,39.2746,-120.1211,Western US - California,California
+Palisades Tahoe,39.1967,-120.2356,Western US - California,California
+Kirkwood,38.6850,-120.0654,Western US - California,California
+Mammoth Mountain,37.6308,-119.0326,Western US - California,California
+Sierra-at-Tahoe,38.8048,-120.0804,Western US - California,California
+Sugar Bowl,39.3043,-120.3336,Western US - California,California
+Donner Ski Ranch,39.3172,-120.3306,Western US - California,California
+Boreal,39.3365,-120.3490,Western US - California,California
+Mt. Rose,39.3284,-119.8850,Western US - California,Nevada
+Diamond Peak,39.2546,-119.9310,Western US - California,Nevada
+Homewood,39.0860,-120.1604,Western US - California,California
+Soda Springs,39.3211,-120.3802,Western US - California,California
+Dodge Ridge,38.1888,-119.9558,Western US - California,California
+China Peak,37.2366,-119.1574,Western US - California,California
+Mountain High,34.3767,-117.6908,Western US - California,California
+Snow Valley,34.2250,-117.0375,Western US - California,California
+Snow Summit,34.2367,-116.8906,Western US - California,California
+Bear Mountain,34.2286,-116.8600,Western US - California,California
+Mt. Baldy,34.2700,-117.6588,Western US - California,California
+Brighton,40.5977,-111.5836,Western US - Utah,Utah
+Solitude,40.6199,-111.5919,Western US - Utah,Utah
+Snowbird,40.5830,-111.6556,Western US - Utah,Utah
+Alta,40.5884,-111.6386,Western US - Utah,Utah
+Park City,40.6461,-111.4980,Western US - Utah,Utah
+Deer Valley,40.6374,-111.4783,Western US - Utah,Utah
+Snowbasin,41.2160,-111.8566,Western US - Utah,Utah
+Powder Mountain,41.3800,-111.7800,Western US - Utah,Utah
+Sundance,40.3924,-111.5788,Western US - Utah,Utah
+Brian Head,37.7024,-112.8498,Western US - Utah,Utah
+Eagle Point,38.3208,-112.3844,Western US - Utah,Utah
+Vail,39.6433,-106.3781,Western US - Colorado,Colorado
+Breckenridge,39.4817,-106.0384,Western US - Colorado,Colorado
+Aspen Snowmass,39.2084,-106.9490,Western US - Colorado,Colorado
+Keystone,39.6084,-105.9437,Western US - Colorado,Colorado
+Beaver Creek,39.6042,-106.5165,Western US - Colorado,Colorado
+Copper Mountain,39.5022,-106.1497,Western US - Colorado,Colorado
+Winter Park,39.8868,-105.7625,Western US - Colorado,Colorado
+Steamboat,40.4572,-106.8045,Western US - Colorado,Colorado
+Telluride,37.9375,-107.8123,Western US - Colorado,Colorado
+Crested Butte,38.8697,-106.9878,Western US - Colorado,Colorado
+Arapahoe Basin,39.6425,-105.8719,Western US - Colorado,Colorado
+Loveland,39.6800,-105.8979,Western US - Colorado,Colorado
+Eldora,39.9372,-105.5827,Western US - Colorado,Colorado
+Monarch,38.5121,-106.3320,Western US - Colorado,Colorado
+Purgatory,37.6303,-107.8140,Western US - Colorado,Colorado
+Wolf Creek,37.4722,-106.7931,Western US - Colorado,Colorado
+Mt. Bachelor,43.9792,-121.6886,Western US - Pacific Northwest,Oregon
+Mt. Hood Meadows,45.3318,-121.6652,Western US - Pacific Northwest,Oregon
+Timberline Lodge,45.3311,-121.7110,Western US - Pacific Northwest,Oregon
+Mt. Baker,48.7767,-121.8144,Western US - Pacific Northwest,Washington
+Crystal Mountain,46.9355,-121.4751,Western US - Pacific Northwest,Washington
+Stevens Pass,47.7448,-121.0890,Western US - Pacific Northwest,Washington
+Snoqualmie Pass,47.4242,-121.4133,Western US - Pacific Northwest,Washington
+White Pass,46.6360,-121.3911,Western US - Pacific Northwest,Washington
+Schweitzer,48.3677,-116.6226,Western US - Pacific Northwest,Idaho
+Sun Valley,43.6962,-114.3525,Western US - Pacific Northwest,Idaho
+Grand Targhee,43.7885,-110.9580,Western US - Pacific Northwest,Wyoming
+Jackson Hole,43.5875,-110.8276,Western US - Pacific Northwest,Wyoming
+Killington,43.6045,-72.8201,Eastern US,Vermont
+Stowe,44.5303,-72.7814,Eastern US,Vermont
+Sugarloaf,45.0312,-70.3131,Eastern US,Maine
+Sunday River,44.4734,-70.8569,Eastern US,Maine
+Whiteface Mountain,44.3658,-73.9026,Eastern US,New York
+Gore Mountain,43.6741,-74.0070,Eastern US,New York
+Hunter Mountain,42.2028,-74.2226,Eastern US,New York
+Mount Snow,42.9602,-72.9204,Eastern US,Vermont
+Okemo,43.4018,-72.7176,Eastern US,Vermont
+Stratton,43.1134,-72.9081,Eastern US,Vermont
+Sugarbush,44.1359,-72.8944,Eastern US,Vermont
+Jay Peak,44.9244,-72.5255,Eastern US,Vermont
+Bretton Woods,44.2542,-71.4406,Eastern US,New Hampshire
+Loon Mountain,44.0360,-71.6214,Eastern US,New Hampshire
+Cannon Mountain,44.1773,-71.7003,Eastern US,New Hampshire
+Attitash,44.0831,-71.2294,Eastern US,New Hampshire
+Wildcat Mountain,44.2590,-71.2401,Eastern US,New Hampshire
+Waterville Valley,43.9504,-71.5280,Eastern US,New Hampshire
+Whistler Blackcomb,50.1163,-122.9574,Canada,British Columbia
+Banff Sunshine,51.1152,-115.7631,Canada,Alberta
+Lake Louise,51.4254,-116.1773,Canada,Alberta
+Revelstoke,51.0050,-118.1957,Canada,British Columbia
+Big White,49.7352,-118.9433,Canada,British Columbia
+Sun Peaks,50.8825,-119.8936,Canada,British Columbia
+Fernie,49.4633,-115.0861,Canada,British Columbia
+Kicking Horse,51.2979,-117.0419,Canada,British Columbia
+Mont Tremblant,46.2095,-74.5855,Canada,Quebec
+Blue Mountain,44.5015,-80.3092,Canada,Ontario
+Mont-Sainte-Anne,47.0756,-70.9033,Canada,Quebec
+Le Massif,47.2792,-70.6314,Canada,Quebec 

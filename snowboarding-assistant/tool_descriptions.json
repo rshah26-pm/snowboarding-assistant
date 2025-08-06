@@ -15,22 +15,6 @@
         "args_schema": null,
         "tags": ["web_search", "snowboarding", "real_time"]
       }
-    },
-    "v2": {
-      "description": "Search for current snowboarding information including resort conditions, weather, gear reviews, and equipment deals.",
-      "long_description": "Access real-time web information about snowboarding resorts, current weather conditions, gear reviews, equipment prices, and snowboarding news. This tool is essential for providing up-to-date information that may not be available in your training data.",
-      "use_cases": [
-        "Live weather and snow conditions",
-        "Current gear prices and sales",
-        "Recent resort reviews and updates",
-        "Snowboarding industry news",
-        "Equipment recommendations and comparisons"
-      ],
-      "langchain_metadata": {
-        "return_direct": false,
-        "args_schema": null,
-        "tags": ["web_search", "snowboarding", "real_time"]
-      }
     }
   },
   "resort_distance_calculator": {
@@ -48,16 +32,6 @@
         "args_schema": null,
         "tags": ["location", "distance", "resorts", "snowboarding"]
       }
-    },
-    "v2": {
-      "description": "Calculate distances to nearby snowboarding resorts from the user's location. Provides the 5 closest resorts with distances for travel planning and location-based recommendations.",
-      "long_description": "Get personalized resort recommendations based on the user's current location. This tool calculates distances to nearby snowboarding resorts and provides the 5 closest options with their distances in miles, helping with travel planning and location-based suggestions.",
-      "use_cases": [
-        "Nearby resort discovery",
-        "Travel distance planning",
-        "Location-based resort recommendations",
-        "Proximity-based resort comparisons"
-      ]
     }
   }
 } 
