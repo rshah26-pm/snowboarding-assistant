@@ -1,7 +1,7 @@
 import os
 from groq import Groq
 import streamlit as st
-from tools import resort_distance_calculator
+from geolocation_tool import resort_distance_calculator
 from web_search_tool import tavily_search_tool
 from dotenv import load_dotenv
 from config import GROQ_API_KEY, check_tavily_usage, INTENT_CLASSIFIER_MODEL, RESPONSE_GENERATION_MODEL  # Import API keys and check_tavily_usage function
