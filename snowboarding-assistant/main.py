@@ -3,7 +3,7 @@ from groq import Groq
 import streamlit as st
 from tools import resort_distance_calculator, tavily_search_tool
 from dotenv import load_dotenv
-from config import GROQ_API_KEY, check_tavily_usage  # Import API keys and check_tavily_usage function
+from config import GROQ_API_KEY, check_tavily_usage, INTENT_CLASSIFIER_MODEL, RESPONSE_GENERATION_MODEL  # Import API keys and check_tavily_usage function
 import logging
 import json
 from prompts import get_prompt  # <-- NEW: import the prompt loader
@@ -115,7 +115,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                     "content": user_prompt
                 }
             ],
-            model="llama-3.1-8b-instant",
+            model=INTENT_CLASSIFIER_MODEL,
             temperature=0.1
         )
 
@@ -222,7 +222,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         logger.info("Sending request to Groq API")
         chat_completion = groq_client.chat.completions.create(
             messages=messages,
-            model="llama-3.1-8b-instant",
+            model=RESPONSE_GENERATION_MODEL,
             temperature=0.7
         )
         
