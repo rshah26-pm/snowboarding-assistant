@@ -4,7 +4,6 @@ import os
 import streamlit as st
 from config import TAVILY_API_KEY, check_tavily_usage
 from prompts import get_prompt
-from tool_config import get_tool_version, get_tool_description
 import logging
 
 # Configure the logger
@@ -75,6 +74,6 @@ def web_search(query: str, return_links: bool = False) -> str:
 # Define the tool
 tavily_search_tool = Tool(
     name="web_search",
-    description=get_tool_description("web_search", get_tool_version("web_search")),
+    description="Useful for searching current information about snowboarding resorts, conditions, gear reviews, and related topics.",
     func=web_search
 ) 

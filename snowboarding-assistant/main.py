@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from config import GROQ_API_KEY, check_tavily_usage, INTENT_CLASSIFIER_MODEL, RESPONSE_GENERATION_MODEL  # Import API keys and check_tavily_usage function
 import logging
 import json
-from prompts import get_prompt  # <-- NEW: import the prompt loader
+from prompts import get_prompt
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +21,21 @@ def build_system_context(user_prompt, RESPONSE_PROMPT_VERSION="v1", LOCATION_PRO
     # Start with the base response generation prompt
     system_context = get_prompt("response_generation", RESPONSE_PROMPT_VERSION)
     
+    location_info = resort_distance_calculator.run("")
+    if location_info is not None:
+        location_context_template = get_prompt("location_context", LOCATION_PROMPT_VERSION)
+        location_context = location_context_template.format(
+            address=location_info['address'],
+            closest_resorts=location_info['closest_resorts']
+        )
+        system_context += "\n" + location_context
+        logger.info(f"Location data provided: {location_context}")
+    else:
+        # Add no-location message from prompts.json
+        no_location_msg = get_prompt("no_location_shared", NO_LOCATION_PROMPT_VERSION)
+        system_context += "\n" + no_location_msg
+
+    """
     # Add location context if available
     if st.session_state.get('user_location'):
         location_data = st.session_state.user_location
@@ -44,6 +59,7 @@ def build_system_context(user_prompt, RESPONSE_PROMPT_VERSION="v1", LOCATION_PRO
         # Add no-location message from prompts.json
         no_location_msg = get_prompt("no_location_shared", NO_LOCATION_PROMPT_VERSION)
         system_context += "\n" + no_location_msg
+    """
 
     # Check if the user is asking about location-based recommendations
     # TODO: Implement a better way to do this
@@ -67,19 +83,22 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         str: The AI assistant's response
     """
     try:
-        # --- PROMPT VERSION CONTROL ---
-        RESPONSE_PROMPT_VERSION = "v1"  # Change to 'v2' for A/B testing
-        INTENT_PROMPT_VERSION = "v1"    # Change to 'v2' for A/B testing
-        LOCATION_PROMPT_VERSION = "v1"
-        WEB_SEARCH_PROMPT_VERSION = "v1"
-        WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION = "v1"
-        NO_LOCATION_PROMPT_VERSION = "v1"
-        LOCATION_SHARING_PROMPT_VERSION = "v1"
+        # Move these version variables to config.py and import them here, with default "v1" for all
+        from config import (
+            RESPONSE_PROMPT_VERSION,
+            INTENT_PROMPT_VERSION,
+            LOCATION_PROMPT_VERSION,
+            WEB_SEARCH_PROMPT_VERSION,
+            WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION,
+            NO_LOCATION_PROMPT_VERSION,
+            LOCATION_SHARING_PROMPT_VERSION
+        )
+
+        load_dotenv()
 
         # Initialize search tracking variables
         search_links = []
         search_used = False
-        load_dotenv()
 
         # Function to get API keys
         def get_api_key(key_name):
@@ -187,23 +206,16 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                         "content": message["content"]
                     })
             messages.extend(history_to_include)
-        else:
-            # If no history, just add the current prompt
-            messages.append({
-                "role": "user",
-                "content": user_prompt
-            })
-        
+
         # Add search results if available (as a separate system message)
         if search_results:
             logger.info("Adding search results to the prompt")
             formatted_links = ""
             if search_links:
                 formatted_links = "\n\nRelevant sources:\n"
-                for i, link in enumerate(search_links[:5]):  # Limit to 5 sources
+                for i, link in enumerate(search_links[:5]):  # Limit to 5 sources; TODO: make this a config variable
                     formatted_links += f"{i+1}. {link}\n"
             
-            # Use template from prompts.json for search results formatting
             search_results_template = get_prompt("web_search_results", WEB_SEARCH_PROMPT_VERSION)
             formatted_search_message = search_results_template.format(
                 search_results=search_results,

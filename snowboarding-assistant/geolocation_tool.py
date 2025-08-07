@@ -2,6 +2,8 @@ from langchain.tools import Tool
 import streamlit as st
 from geopy.distance import geodesic
 from tool_config import get_tool_version, get_tool_description
+from prompts import get_prompt
+from config import LOCATION_PROMPT_VERSION, NO_LOCATION_PROMPT_VERSION
 import pandas as pd
 import os
 import logging
@@ -13,6 +15,7 @@ logger = logging.getLogger(__name__)
 def load_ski_resorts_data():
     """Load ski resorts data from CSV file."""
     csv_path = os.path.join(os.path.dirname(__file__), "ski_resorts.csv")
+
     try:
         df = pd.read_csv(csv_path)
         # Convert to dictionary with resort name as key and (lat, lon) as value
@@ -35,7 +38,12 @@ def get_user_to_resort_distance(query: str = "") -> str:
     print(f"🔧 Using tool: resort_distance_calculator")  
     
     if 'user_location' not in st.session_state or not st.session_state.user_location:
-        return "Location access not granted. Please enable location sharing for personalized resort recommendations."
+        return None
+    
+    if st.session_state.get('user_location'):
+        location_data = st.session_state.user_location
+        lat, lon = location_data['coordinates']
+        address = location_data['address'] 
     
     location_data = st.session_state.user_location
     try:
@@ -56,21 +64,42 @@ def get_user_to_resort_distance(query: str = "") -> str:
         closest_resorts = resort_distances[:5]
         
         # Format distances for the 5 closest resorts
-        formatted_distances = "\n- ".join([f"{resort}: {int(distance)} miles" for resort, distance in closest_resorts])
-        
-        # Get the two closest for the summary line
-        closest_two = closest_resorts[:2]
-        
-        return f"""Current location: {address}
-        
-The 5 closest ski resorts to your location:
-- {formatted_distances}
-
-The closest resorts to your location are {closest_two[0][0]} ({int(closest_two[0][1])} miles) and {closest_two[1][0]} ({int(closest_two[1][1])} miles).
-"""
-
+        result = {
+            "address": address,
+            "closest_resorts": {resort: distance for resort, distance in closest_resorts}
+        }
+        return result        
     except Exception as e:
-        return f"Error processing location data: {str(e)}"
+        logger.error("Error processing location data, returning None")
+        return None
+"""
+def get_resort_proximity_info(query: str = "") -> str:
+    print(f"🔧 Using tool: resort_distance_calculator")  
+    
+    if st.session_state.get('user_location'):
+        location_data = st.session_state.user_location
+        lat, lon = location_data['coordinates']
+        address = location_data['address']
+
+        location_info = resort_distance_calculator.run("")
+
+        # Format location context using template from prompts.json
+        location_context_template = get_prompt("location_context", LOCATION_PROMPT_VERSION)
+        location_context = location_context_template.format(
+            address=address,
+            lat=lat,
+            lon=lon,
+            location_info=location_info
+        )
+        system_context += "\n" + location_context
+        logger.info(f"Location data provided: {address}")
+    else:
+        # Add no-location message from prompts.json
+        no_location_msg = get_prompt("no_location_shared", NO_LOCATION_PROMPT_VERSION)
+        system_context += "\n" + no_location_msg  
+
+    return location_context
+"""
 
 # Define the tool
 resort_distance_calculator = Tool(

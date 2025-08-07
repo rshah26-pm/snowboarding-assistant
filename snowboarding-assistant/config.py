@@ -7,6 +7,14 @@ from datetime import datetime
 # Load environment variables from .env file if it exists
 load_dotenv()
 
+RESPONSE_PROMPT_VERSION = "v1"
+INTENT_PROMPT_VERSION = "v1"
+LOCATION_PROMPT_VERSION = "v1"
+WEB_SEARCH_PROMPT_VERSION = "v1"
+WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION = "v1"
+NO_LOCATION_PROMPT_VERSION = "v1"
+LOCATION_SHARING_PROMPT_VERSION = "v1"
+
 # Function to get API keys from either environment variables or Streamlit secrets
 def get_api_key(key_name):
     env_value = os.environ.get(key_name)
