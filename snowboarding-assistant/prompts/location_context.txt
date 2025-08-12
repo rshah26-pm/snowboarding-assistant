@@ -1,0 +1,6 @@
+User's current location: {address} 
+
+ Closest_resorts:
+{closest_resorts}
+
+Use this location information when making recommendations about nearby resorts. 

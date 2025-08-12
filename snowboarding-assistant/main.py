@@ -4,71 +4,135 @@ import streamlit as st
 from geolocation_tool import resort_distance_calculator
 from web_search_tool import tavily_search_tool
 from dotenv import load_dotenv
-from config import GROQ_API_KEY, check_tavily_usage, INTENT_CLASSIFIER_MODEL, RESPONSE_GENERATION_MODEL  # Import API keys and check_tavily_usage function
+from config import (
+    GROQ_API_KEY,
+    check_tavily_usage,
+    ACTION_CLASSIFIER_MODEL,
+    RESPONSE_GENERATION_MODEL
+)
 import logging
 import json
 from prompts import get_prompt
+import time
+import requests
+from action_classifier import classify_actions
 
 # Set up logger
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def build_system_context(user_prompt, RESPONSE_PROMPT_VERSION="v1", LOCATION_PROMPT_VERSION="v1", 
-                        NO_LOCATION_PROMPT_VERSION="v1", LOCATION_SHARING_PROMPT_VERSION="v1"):
+def validate_groq_request(messages, model, temperature=0.7):
+    """
+    Validate the Groq API request before sending
+    """
+    # Check if messages are properly formatted
+    if not messages or not isinstance(messages, list):
+        raise ValueError("Messages must be a non-empty list")
+    
+    for message in messages:
+        if not isinstance(message, dict):
+            raise ValueError("Each message must be a dictionary")
+        if 'role' not in message or 'content' not in message:
+            raise ValueError("Each message must have 'role' and 'content' keys")
+        if message['role'] not in ['system', 'user', 'assistant']:
+            raise ValueError("Message role must be 'system', 'user', or 'assistant'")
+        if not isinstance(message['content'], str):
+            raise ValueError("Message content must be a string")
+    
+    # Check model name
+    if not model or not isinstance(model, str):
+        raise ValueError("Model must be a non-empty string")
+    
+    # Check temperature
+    if not isinstance(temperature, (int, float)) or temperature < 0 or temperature > 2:
+        raise ValueError("Temperature must be a number between 0 and 2")
+    
+    # Check total content length (Groq has limits)
+    total_content = sum(len(msg.get('content', '')) for msg in messages)
+    if total_content > 32000:  # Conservative limit
+        logger.warning(f"Total content length ({total_content}) is large, may cause issues")
+    
+    return True
+
+def retry_groq_request(groq_client, messages, model, temperature=0.7, max_retries=3):
+    """
+    Retry Groq API request with exponential backoff
+    """
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Attempting Groq API request (attempt {attempt + 1}/{max_retries})")
+            
+            # Validate request before sending
+            validate_groq_request(messages, model, temperature)
+            
+            # Add small delay between retries
+            if attempt > 0:
+                time.sleep(2 ** attempt)  # Exponential backoff: 2, 4, 8 seconds
+            
+            response = groq_client.chat.completions.create(
+                messages=messages,
+                model=model,
+                temperature=temperature,
+                max_tokens=4000  # Add explicit token limit
+            )
+            
+            logger.info("Groq API request successful")
+            return response
+            
+        except Exception as e:
+            logger.error(f"Groq API attempt {attempt + 1} failed: {str(e)}")
+            
+            # If it's the last attempt, raise the error
+            if attempt == max_retries - 1:
+                raise e
+            
+            # Check if it's a rate limit error
+            if "rate_limit" in str(e).lower() or "429" in str(e):
+                logger.warning("Rate limit detected, waiting longer before retry")
+                time.sleep(10)  # Wait 10 seconds for rate limits
+            elif "500" in str(e) or "internal_server_error" in str(e).lower():
+                logger.warning("Internal server error detected, retrying...")
+                time.sleep(5)  # Wait 5 seconds for server errors
+            else:
+                logger.warning(f"Unknown error type: {type(e).__name__}")
+                time.sleep(2)
+
+def geolocation_tool_adaptor(system_context, user_prompt):
+        """
+        Appends the appropriate location context to the system context
+        using the resort_distance_calculator tool and user session state.
+        Assumes the calling code has already verified the user is asking for location-based recommendations.
+        """
+        location_info = resort_distance_calculator.run("")
+        if location_info is not None:
+            location_context_template = get_prompt("location_context")
+            # Format closest_resorts as a pretty string if it's a dict
+            closest_resorts = location_info.get('closest_resorts')
+            if isinstance(closest_resorts, dict):
+                closest_resorts_str = "\n".join(
+                    f"- {resort}: {distance:.1f} miles" for resort, distance in closest_resorts.items()
+                )
+            else:
+                closest_resorts_str = str(closest_resorts)
+            location_context = location_context_template.format(
+                address=location_info.get('address', ''),
+                closest_resorts=closest_resorts_str
+            )
+            system_context += "\n" + location_context
+            logger.info(f"Location data provided: {location_context}")
+        else:
+            # Add no-location message from prompts.json
+            no_location_msg = get_prompt("no_location_shared")
+            system_context += "\n" + no_location_msg
+
+        return system_context
+    
+def build_system_context(user_prompt):
     """
     Build the system context from prompts.json based on current state.
     """
     # Start with the base response generation prompt
-    system_context = get_prompt("response_generation", RESPONSE_PROMPT_VERSION)
-    
-    location_info = resort_distance_calculator.run("")
-    if location_info is not None:
-        location_context_template = get_prompt("location_context", LOCATION_PROMPT_VERSION)
-        location_context = location_context_template.format(
-            address=location_info['address'],
-            closest_resorts=location_info['closest_resorts']
-        )
-        system_context += "\n" + location_context
-        logger.info(f"Location data provided: {location_context}")
-    else:
-        # Add no-location message from prompts.json
-        no_location_msg = get_prompt("no_location_shared", NO_LOCATION_PROMPT_VERSION)
-        system_context += "\n" + no_location_msg
-
-    """
-    # Add location context if available
-    if st.session_state.get('user_location'):
-        location_data = st.session_state.user_location
-        lat, lon = location_data['coordinates']
-        address = location_data['address']
-        
-        # Run the location tool to get distances
-        location_info = resort_distance_calculator.run("")
-        
-        # Format location context using template from prompts.json
-        location_context_template = get_prompt("location_context", LOCATION_PROMPT_VERSION)
-        location_context = location_context_template.format(
-            address=address,
-            lat=lat,
-            lon=lon,
-            location_info=location_info
-        )
-        system_context += "\n" + location_context
-        logger.info(f"Location data provided: {address}")
-    else:
-        # Add no-location message from prompts.json
-        no_location_msg = get_prompt("no_location_shared", NO_LOCATION_PROMPT_VERSION)
-        system_context += "\n" + no_location_msg
-    """
-
-    # Check if the user is asking about location-based recommendations
-    # TODO: Implement a better way to do this
-    location_keywords = ["near me", "nearby", "closest", "nearest", "my location", "my area", "distance", "how far"]
-    is_location_query = any(keyword in user_prompt.lower() for keyword in location_keywords)
-    if is_location_query and not st.session_state.get('user_location'):
-        location_suggestion = get_prompt("location_sharing_suggestion", LOCATION_SHARING_PROMPT_VERSION)
-        system_context += "\n" + location_suggestion
-    
+    system_context = get_prompt("response_generation")    
     return system_context
 
 def get_snowboard_assistant_response(user_prompt, conversation_history=None):
@@ -83,17 +147,6 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
         str: The AI assistant's response
     """
     try:
-        # Move these version variables to config.py and import them here, with default "v1" for all
-        from config import (
-            RESPONSE_PROMPT_VERSION,
-            INTENT_PROMPT_VERSION,
-            LOCATION_PROMPT_VERSION,
-            WEB_SEARCH_PROMPT_VERSION,
-            WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION,
-            NO_LOCATION_PROMPT_VERSION,
-            LOCATION_SHARING_PROMPT_VERSION
-        )
-
         load_dotenv()
 
         # Initialize search tracking variables
@@ -116,46 +169,31 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             logger.error(error_msg)
             return f"Configuration error: {error_msg}. Please check your API key setup."
         
+        logger.info(f"Initializing Groq client. action_classifier_model={ACTION_CLASSIFIER_MODEL}")
         groq_client = Groq(api_key=GROQ_API_KEY)
 
-        # --- BUILD SYSTEM CONTEXT FROM PROMPTS.JSON ---
-        system_context = build_system_context(
-            user_prompt, 
-            RESPONSE_PROMPT_VERSION, 
-            LOCATION_PROMPT_VERSION,
-            NO_LOCATION_PROMPT_VERSION,
-            LOCATION_SHARING_PROMPT_VERSION
-        )
+        system_context = build_system_context(user_prompt)
 
-        # --- INTENT CLASSIFIER PROMPT ---
-        intent_classifier_prompt = get_prompt("intent_classifier", INTENT_PROMPT_VERSION)
-        planning_message = groq_client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": intent_classifier_prompt
-                },
-                {
-                    "role": "user",
-                    "content": user_prompt
-                }
-            ],
-            model=INTENT_CLASSIFIER_MODEL,
-            temperature=0.1
-        )
-
-        response = planning_message.choices[0].message.content.strip()
-        needs_search = response.upper().startswith("YES")
-        
-        # Extract optimized search query if search is needed
-        search_query = user_prompt
-        if needs_search and ":" in response:
-            search_query = response.split(":", 1)[1].strip()
+        # LLM based action classifier (to determine if we need to use a tool)
+        logger.info(f"Running action classifier for user prompt")
+        try:
+            classification = classify_actions(
+                user_prompt=user_prompt,
+                groq_client=groq_client,
+                model=ACTION_CLASSIFIER_MODEL,
+            )
+            tool_use = classification["tool_use"]
+            search_query = classification["search_query"] or user_prompt
+            logger.info(f"Classifier decided tool_use={tool_use} search_query='{search_query}'")
+        except Exception as intent_error:
+            logger.error(f"Action classifier failed: {str(intent_error)}")
+            tool_use = {"search": False, "geolocation": False}
+            search_query = user_prompt
      
         # If needed, perform web search
         search_results = ""
         search_links = []
-        if needs_search:
+        if tool_use["search"]:
             logger.info(f"Web search needed for query: '{search_query}'")
             # Check if we've exceeded the Tavily usage limit
             usage_count, limit_exceeded = check_tavily_usage()
@@ -163,7 +201,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             if limit_exceeded:
                 logger.info("Tavily usage limit exceeded, skipping web search")
                 # Use the prompt from prompts.json for the "web search unavailable" message
-                search_results = get_prompt("web_search_unavailable", WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION)
+                search_results = get_prompt("web_search_unavailable")
             else:
                 logger.info(f"Performing Tavily search with query: '{search_query}'")
                 raw_results = tavily_search_tool.run(search_query, return_links=True)
@@ -216,7 +254,7 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                 for i, link in enumerate(search_links[:5]):  # Limit to 5 sources; TODO: make this a config variable
                     formatted_links += f"{i+1}. {link}\n"
             
-            search_results_template = get_prompt("web_search_results", WEB_SEARCH_PROMPT_VERSION)
+            search_results_template = get_prompt("web_search_results")
             formatted_search_message = search_results_template.format(
                 search_results=search_results,
                 formatted_links=formatted_links
@@ -246,7 +284,8 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
             return f"Configuration error: {error_msg}. Please check your model configuration."
         
         try:
-            chat_completion = groq_client.chat.completions.create(
+            chat_completion = retry_groq_request(
+                groq_client=groq_client,
                 messages=messages,
                 model=RESPONSE_GENERATION_MODEL,
                 temperature=0.7

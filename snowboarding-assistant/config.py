@@ -7,45 +7,15 @@ from datetime import datetime
 # Load environment variables from .env file if it exists
 load_dotenv()
 
-RESPONSE_PROMPT_VERSION = "v1"
-INTENT_PROMPT_VERSION = "v1"
-LOCATION_PROMPT_VERSION = "v1"
-WEB_SEARCH_PROMPT_VERSION = "v1"
-WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION = "v1"
-NO_LOCATION_PROMPT_VERSION = "v1"
-LOCATION_SHARING_PROMPT_VERSION = "v1"
-
-# Function to get API keys from either environment variables or Streamlit secrets
-def get_api_key(key_name):
-    env_value = os.environ.get(key_name)
-    if env_value:
-        print(f"Found {key_name} in environment variables")
-        return env_value
-    
-    # First try to get from Streamlit secrets
-    try:
-        if key_name in st.secrets:
-            print(f"Found {key_name} in Streamlit secrets")
-            return st.secrets[key_name]
-    except Exception as e:
-        print(f"Error accessing nested secrets: {e}")
-   
-    print(f"WARNING: {key_name} not found in Streamlit secrets or environment variables")
-    return None
-
-# Initialize API keys
-TAVILY_API_KEY = get_api_key("TAVILY_API_KEY")
-GROQ_API_KEY = get_api_key("GROQ_API_KEY")
-
 # ===== MODEL CONFIGURATION =====
 # Model names for different tasks
-INTENT_CLASSIFIER_MODEL = os.environ.get("INTENT_CLASSIFIER_MODEL", "llama-3.1-8b-instant")
+ACTION_CLASSIFIER_MODEL = os.environ.get("INTENT_CLASSIFIER_MODEL", "llama-3.1-8b-instant")
 RESPONSE_GENERATION_MODEL = os.environ.get("RESPONSE_GENERATION_MODEL", "llama-3.1-8b-instant")
 
 # Temperature settings for different tasks
 TEMPERATURE_CONFIGS = {
-    "intent_classifier": float(os.environ.get("INTENT_CLASSIFIER_TEMPERATURE", "0.1")),
-    "response_generation": float(os.environ.get("RESPONSE_GENERATION_TEMPERATURE", "0.7"))
+    "action_classifier": float(os.environ.get("ACTION_CLASSIFIER_TEMPERATURE", "0.1")),
+    "response_generation": float(os.environ.get("RESPONSE_GENERATION_TEMPERATURE", "0.7")),
 }
 
 # ===== RATE LIMITING & USAGE LIMITS =====
@@ -71,18 +41,6 @@ ENABLE_SOURCE_LINKS = os.environ.get("ENABLE_SOURCE_LINKS", "true").lower() == "
 COMPRESS_IMAGES = os.environ.get("COMPRESS_IMAGES", "false").lower() == "true"
 DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").lower() == "true"
 
-# ===== PROMPT VERSION CONTROL =====
-# Default prompt versions (can be overridden per request)
-DEFAULT_PROMPT_VERSIONS = {
-    "response_generation": os.environ.get("RESPONSE_PROMPT_VERSION", "v1"),
-    "intent_classifier": os.environ.get("INTENT_PROMPT_VERSION", "v1"),
-    "location_context": os.environ.get("LOCATION_PROMPT_VERSION", "v1"),
-    "web_search_results": os.environ.get("WEB_SEARCH_PROMPT_VERSION", "v1"),
-    "web_search_unavailable": os.environ.get("WEB_SEARCH_UNAVAILABLE_PROMPT_VERSION", "v1"),
-    "no_location_shared": os.environ.get("NO_LOCATION_PROMPT_VERSION", "v1"),
-    "location_sharing_suggestion": os.environ.get("LOCATION_SHARING_PROMPT_VERSION", "v1")
-}
-
 # ===== EVALUATION CONFIGURATION =====
 # Settings specifically for running evaluations
 EVAL_CONFIG = {
@@ -92,6 +50,28 @@ EVAL_CONFIG = {
     "log_search_usage": True,
     "track_response_times": True
 }
+
+# Function to get API keys from either environment variables or Streamlit secrets
+def get_api_key(key_name):
+    env_value = os.environ.get(key_name)
+    if env_value:
+        print(f"Found {key_name} in environment variables")
+        return env_value
+    
+    # First try to get from Streamlit secrets
+    try:
+        if key_name in st.secrets:
+            print(f"Found {key_name} in Streamlit secrets")
+            return st.secrets[key_name]
+    except Exception as e:
+        print(f"Error accessing nested secrets: {e}")
+   
+    print(f"WARNING: {key_name} not found in Streamlit secrets or environment variables")
+    return None
+
+# Initialize API keys
+TAVILY_API_KEY = get_api_key("TAVILY_API_KEY")
+GROQ_API_KEY = get_api_key("GROQ_API_KEY")
 
 # Function to check Tavily API usage
 def check_tavily_usage():
@@ -152,7 +132,7 @@ def get_config_summary():
     """Get a summary of current configuration for debugging/evaluation"""
     return {
         "models": {
-            "intent_classifier": INTENT_CLASSIFIER_MODEL,
+            "action_classifier": ACTION_CLASSIFIER_MODEL,
             "response_generation": RESPONSE_GENERATION_MODEL
         },
         "temperatures": TEMPERATURE_CONFIGS,
@@ -168,6 +148,5 @@ def get_config_summary():
             "location_services": ENABLE_LOCATION_SERVICES,
             "source_links": ENABLE_SOURCE_LINKS,
             "debug_mode": DEBUG_MODE
-        },
-        "prompt_versions": DEFAULT_PROMPT_VERSIONS
+        }
     }

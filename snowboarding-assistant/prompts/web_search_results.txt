@@ -1,0 +1,5 @@
+Web search results:
+{search_results}
+{formatted_links}
+
+Use this information in your response when relevant. DO NOT include links in your response. DO NOT include a Sources section at the end of your response. 

@@ -383,7 +383,6 @@ def process_user_input(prompt):
                 if not st.session_state.user_location:
                     add_debug_info("No location data available for response")
                 
-                # Pass conversation history to get_snowboard_assistant_response
                 conversation_history = st.session_state.messages.copy()
                 response = get_snowboard_assistant_response(prompt, conversation_history)
                 add_debug_info("Got assistant response")

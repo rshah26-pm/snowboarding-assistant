@@ -1,34 +1,20 @@
-import json
 import os
 
-PROMPT_JSON_PATH = os.path.join(os.path.dirname(__file__), "prompts.json")
+PROMPTS_DIR = os.path.join(os.path.dirname(__file__), "prompts")
 
-def load_prompts():
-    with open(PROMPT_JSON_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-PROMPTS = load_prompts()
-
-def get_prompt(prompt_type, version="v1"):
-    prompt_versions = PROMPTS.get(prompt_type, {})
-    if version in prompt_versions:
-        return prompt_versions[version]["prompt"]
-    elif "v1" in prompt_versions:
-        return prompt_versions["v1"]["prompt"]
-    else:
-        raise ValueError(f"No prompt found for type '{prompt_type}' and version '{version}'")
-
-def get_prompt_description(prompt_type, version="v1"):
-    prompt_versions = PROMPTS.get(prompt_type, {})
-    if version in prompt_versions:
-        return prompt_versions[version]["description"]
-    elif "v1" in prompt_versions:
-        return prompt_versions["v1"]["description"]
-    else:
-        return ""
+def get_prompt(prompt_type):
+    """Get prompt content from text file"""
+    file_path = os.path.join(PROMPTS_DIR, f"{prompt_type}.txt")
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        raise ValueError(f"Prompt file not found: {file_path}")
 
 def list_prompt_types():
-    return list(PROMPTS.keys())
-
-def list_versions(prompt_type):
-    return list(PROMPTS.get(prompt_type, {}).keys())
+    """List all available prompt types based on available text files"""
+    if not os.path.exists(PROMPTS_DIR):
+        return []
+    
+    prompt_files = [f for f in os.listdir(PROMPTS_DIR) if f.endswith('.txt')]
+    return [f[:-4] for f in prompt_files]  # Remove .txt extension

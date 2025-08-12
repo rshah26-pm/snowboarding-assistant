@@ -3,7 +3,6 @@ import streamlit as st
 from geopy.distance import geodesic
 from tool_config import get_tool_version, get_tool_description
 from prompts import get_prompt
-from config import LOCATION_PROMPT_VERSION, NO_LOCATION_PROMPT_VERSION
 import pandas as pd
 import os
 import logging
@@ -106,4 +105,4 @@ resort_distance_calculator = Tool(
     name="resort_distance_calculator",
     description=get_tool_description("resort_distance_calculator", get_tool_version("resort_distance_calculator")),
     func=get_user_to_resort_distance
-) 
+)
