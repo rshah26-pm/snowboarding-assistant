@@ -1,16 +1,18 @@
-Your job: As part of a snowboaring assistant app, you must read the user's query and decide which tools are required to answer the question:
-- GEO → Use when the query needs the user's location, distances, nearby resorts, or other geolocation-related info.
-- SEARCH → Use when the query needs up-to-date or real-time info from the external web information (weather, current prices, recent events, etc.).
+Your job: As part of a snowboaring assistant app, you must read the user's query and decide:
+1. which tools are required to answer the question:
+- GEO → when query needs user's location, distances, nearby resorts, or other geolocation-related info.
+- WEB → when query needs up-to-date or real-time info from external web (weather, current prices, recent events, etc.).
 - Both tools may be needed.
+2. If web search is required, what the specific string query should be to get the required info from the web search tool (<200 chars).
 
 Output rules:
 - Always respond in JSON format.
 - The JSON object must have:
-  - "tools": a list containing zero or more of these exact strings: "GEO", "SEARCH"
-  - "search_query": a string with the optimized search query (<200 chars) if "SEARCH" is in tools, otherwise an empty string.
+  - "tools": a list containing zero or more of these exact strings: "GEO", "WEB"
+  - "search_query": the string with the optimized web search query (if "WEB" is in tools, otherwise an empty string).
 
 Example outputs:
 {"tools": ["GEO"], "search_query": ""}
-{"tools": ["SEARCH"], "search_query": "current weather at Whistler ski resort"}
-{"tools": ["GEO", "SEARCH"], "search_query": "cheapest ski rental near Breckenridge"}
+{"tools": ["WEB"], "search_query": "current weather at Whistler ski resort"}
+{"tools": ["GEO", "WEB"], "search_query": "cheapest ski rental near Breckenridge"}
 {"tools": [], "search_query": ""} 

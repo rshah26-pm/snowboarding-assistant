@@ -97,23 +97,18 @@ def retry_groq_request(groq_client, messages, model, temperature=0.7, max_retrie
                 logger.warning(f"Unknown error type: {type(e).__name__}")
                 time.sleep(2)
 
-def geolocation_tool_adaptor(system_context, user_prompt):
+def geolocation_tool_adaptor(system_context):
         """
-        Appends the appropriate location context to the system context
-        using the resort_distance_calculator tool and user session state.
+        Calls the geolocation tool and handles the appropriate system prompt chaining.
         Assumes the calling code has already verified the user is asking for location-based recommendations.
         """
         location_info = resort_distance_calculator.run("")
         if location_info is not None:
             location_context_template = get_prompt("location_context")
-            # Format closest_resorts as a pretty string if it's a dict
             closest_resorts = location_info.get('closest_resorts')
-            if isinstance(closest_resorts, dict):
-                closest_resorts_str = "\n".join(
-                    f"- {resort}: {distance:.1f} miles" for resort, distance in closest_resorts.items()
-                )
-            else:
-                closest_resorts_str = str(closest_resorts)
+            closest_resorts_str = "\n".join(
+                f"- {resort}: {distance:.1f} miles" for resort, distance in closest_resorts.items()
+            )
             location_context = location_context_template.format(
                 address=location_info.get('address', ''),
                 closest_resorts=closest_resorts_str
@@ -121,7 +116,6 @@ def geolocation_tool_adaptor(system_context, user_prompt):
             system_context += "\n" + location_context
             logger.info(f"Location data provided: {location_context}")
         else:
-            # Add no-location message from prompts.json
             no_location_msg = get_prompt("no_location_shared")
             system_context += "\n" + no_location_msg
 
@@ -183,17 +177,22 @@ def get_snowboard_assistant_response(user_prompt, conversation_history=None):
                 model=ACTION_CLASSIFIER_MODEL,
             )
             tool_use = classification["tool_use"]
-            search_query = classification["search_query"] or user_prompt
+            search_query = classification["search_query"]
             logger.info(f"Classifier decided tool_use={tool_use} search_query='{search_query}'")
         except Exception as intent_error:
             logger.error(f"Action classifier failed: {str(intent_error)}")
             tool_use = {"search": False, "geolocation": False}
-            search_query = user_prompt
+
+        if tool_use["geolocation"]:
+            system_context = geolocation_tool_adaptor(system_context)
+            logger.info(f"Added location context to system context")
      
         # If needed, perform web search
         search_results = ""
         search_links = []
-        if tool_use["search"]:
+        if tool_use["web_search"]:
+            if search_query is None:
+                search_query = user_prompt # temporary fix until we tune the prompt to never do this
             logger.info(f"Web search needed for query: '{search_query}'")
             # Check if we've exceeded the Tavily usage limit
             usage_count, limit_exceeded = check_tavily_usage()

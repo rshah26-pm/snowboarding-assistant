@@ -36,7 +36,7 @@ def classify_actions(
 
     Returns a dict:
       {
-        "tool_use": {"search": bool, "geolocation": bool},
+        "tool_use": {"web_search": bool, "geolocation": bool},
         "search_query": str | None,
         "raw_response": str
       }
@@ -58,11 +58,11 @@ def classify_actions(
     raw = completion.choices[0].message.content.strip()
     upper = raw.upper()
 
-    tool_use = {"search": False, "geolocation": False}
+    tool_use = {"web_search": False, "geolocation": False}
     search_query = None
 
-    if "SEARCH" in upper:
-        tool_use["search"] = True
+    if "WEB" in upper:
+        tool_use["web_search"] = True
     elif "GEO" in upper:
         tool_use["geolocation"] = True
 

@@ -38,14 +38,9 @@ def get_user_to_resort_distance(query: str = "") -> str:
     
     if 'user_location' not in st.session_state or not st.session_state.user_location:
         return None
-    
-    if st.session_state.get('user_location'):
-        location_data = st.session_state.user_location
-        lat, lon = location_data['coordinates']
-        address = location_data['address'] 
-    
-    location_data = st.session_state.user_location
+    # Move all logic into the try block and let the except handle missing/invalid data.
     try:
+        location_data = st.session_state.user_location
         lat, lon = location_data['coordinates']
         address = location_data['address']
         
@@ -67,10 +62,12 @@ def get_user_to_resort_distance(query: str = "") -> str:
             "address": address,
             "closest_resorts": {resort: distance for resort, distance in closest_resorts}
         }
-        return result        
+        
+        return result
     except Exception as e:
         logger.error("Error processing location data, returning None")
         return None
+
 """
 def get_resort_proximity_info(query: str = "") -> str:
     print(f"🔧 Using tool: resort_distance_calculator")  
