@@ -45,7 +45,6 @@ DEBUG_MODE = os.environ.get("DEBUG_MODE", "false").lower() == "true"
 # Settings specifically for running evaluations
 EVAL_CONFIG = {
     "enable_logging": True,
-    "log_prompt_versions": True,
     "log_model_usage": True,
     "log_search_usage": True,
     "track_response_times": True

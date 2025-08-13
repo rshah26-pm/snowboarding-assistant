@@ -32,16 +32,15 @@ def load_ski_resorts_data():
             'Aspen Snowmass': (39.2084, -106.9490)
         }
 
-def get_user_to_resort_distance(query: str = "") -> str:
+def get_resort_proximity_info(query: str = "") -> str:
     """Get user's location and return relevant information for snowboarding recommendations."""
-    print(f"🔧 Using tool: resort_distance_calculator")  
+    print(f"🔧 Using tool: resort_distance_tool")  
     
     if 'user_location' not in st.session_state or not st.session_state.user_location:
         return None
-    # Move all logic into the try block and let the except handle missing/invalid data.
+
     try:
-        location_data = st.session_state.user_location
-        lat, lon = location_data['coordinates']
+        location_data = st.session_state.user_location        
         address = location_data['address']
         
         # Load ski resorts data from CSV file
@@ -68,38 +67,8 @@ def get_user_to_resort_distance(query: str = "") -> str:
         logger.error("Error processing location data, returning None")
         return None
 
-"""
-def get_resort_proximity_info(query: str = "") -> str:
-    print(f"🔧 Using tool: resort_distance_calculator")  
-    
-    if st.session_state.get('user_location'):
-        location_data = st.session_state.user_location
-        lat, lon = location_data['coordinates']
-        address = location_data['address']
-
-        location_info = resort_distance_calculator.run("")
-
-        # Format location context using template from prompts.json
-        location_context_template = get_prompt("location_context", LOCATION_PROMPT_VERSION)
-        location_context = location_context_template.format(
-            address=address,
-            lat=lat,
-            lon=lon,
-            location_info=location_info
-        )
-        system_context += "\n" + location_context
-        logger.info(f"Location data provided: {address}")
-    else:
-        # Add no-location message from prompts.json
-        no_location_msg = get_prompt("no_location_shared", NO_LOCATION_PROMPT_VERSION)
-        system_context += "\n" + no_location_msg  
-
-    return location_context
-"""
-
-# Define the tool
-resort_distance_calculator = Tool(
-    name="resort_distance_calculator",
-    description=get_tool_description("resort_distance_calculator", get_tool_version("resort_distance_calculator")),
-    func=get_user_to_resort_distance
+resort_distance_tool = Tool(
+    name="resort_distance_tool",
+    description=get_tool_description("resort_distance_tool", get_tool_version("resort_distance_tool")),
+    func=get_resort_proximity_info
 )

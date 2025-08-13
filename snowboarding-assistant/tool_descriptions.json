@@ -17,7 +17,7 @@
       }
     }
   },
-  "resort_distance_calculator": {
+  "resort_distance_tool": {
     "v1": {
       "description": "Use this tool to calculate distances from the user's location to nearby snowboarding resorts. It provides the user's location and distances to the 5 closest ski resorts. Only use this when the user's query involves location-based recommendations, distance considerations, or travel planning. The tool returns distances to the closest ski resorts based on the user's current location.",
       "long_description": "Calculate distances from the user's current location to nearby snowboarding resorts. This tool provides personalized recommendations based on proximity, helping users find the closest resorts to their location. It returns the 5 nearest resorts with their distances in miles.",

@@ -1,7 +1,7 @@
 import os
 from groq import Groq
 import streamlit as st
-from geolocation_tool import resort_distance_calculator
+from geolocation_tool import resort_distance_tool
 from web_search_tool import tavily_search_tool
 from dotenv import load_dotenv
 from config import (
@@ -102,7 +102,7 @@ def geolocation_tool_adaptor(system_context):
         Calls the geolocation tool and handles the appropriate system prompt chaining.
         Assumes the calling code has already verified the user is asking for location-based recommendations.
         """
-        location_info = resort_distance_calculator.run("")
+        location_info = resort_distance_tool.run("")
         if location_info is not None:
             location_context_template = get_prompt("location_context")
             closest_resorts = location_info.get('closest_resorts')
